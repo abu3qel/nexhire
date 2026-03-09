@@ -1,26 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:         #080c14;
+  --bg2:        #0d1320;
+  --bg3:        #111827;
+  --panel:      #131d2e;
+  --panel2:     #192334;
+  --border:     #1e2d42;
+  --border2:    #253548;
+
+  --gold:       #f0a500;
+  --gold2:      #ffc947;
+  --gold-dim:   rgba(240, 165, 0, 0.12);
+  --gold-dim2:  rgba(240, 165, 0, 0.06);
+
+  --cyan:       #00c8d4;
+  --cyan-dim:   rgba(0, 200, 212, 0.1);
+
+  --red:        #ff4d6d;
+  --red-dim:    rgba(255, 77, 109, 0.1);
+
+  --green:      #00d68f;
+  --green-dim:  rgba(0, 214, 143, 0.1);
+
+  --text:       #e8edf5;
+  --text2:      #8a9bb5;
+  --text3:      #4a5a72;
+
+  --radius:     10px;
+  --radius-sm:  6px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* scrollbar */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* typography helpers */
+.font-syne  { font-family: 'Syne', sans-serif; }
+.font-mono  { font-family: 'DM Mono', monospace; }
+
+/* grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(30, 45, 66, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 45, 66, 0.25) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* selection */
+::selection {
+  background: var(--gold-dim);
+  color: var(--gold);
 }
