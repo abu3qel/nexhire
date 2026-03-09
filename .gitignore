@@ -1,0 +1,12 @@
+# Env
+.env
+.env.local
+
+# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# Chroma
+chroma_data/
