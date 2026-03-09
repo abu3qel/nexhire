@@ -30,7 +30,7 @@ export default function Navbar() {
         }}
       >
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <div
             className="flex items-center justify-center"
             style={{
