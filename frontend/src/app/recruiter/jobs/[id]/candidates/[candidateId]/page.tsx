@@ -1,7 +1,6 @@
 "use client";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useAssessment } from "@/hooks/useAssessment";
 import { useQuery } from "@tanstack/react-query";
@@ -17,18 +16,19 @@ import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "
 
 function CompositeRing({ score }: { score: number }) {
   const pct = Math.round(score * 100);
-  const data = [{ name: "score", value: pct, fill: pct >= 70 ? "#00d4aa" : pct >= 40 ? "#f59e0b" : "#ef4444" }];
+  const color = pct >= 70 ? "#059669" : pct >= 40 ? "#D97706" : "#DC2626";
+  const data = [{ name: "score", value: pct, fill: color }];
   return (
-    <div className="relative w-36 h-36">
+    <div className="relative w-32 h-32">
       <ResponsiveContainer width="100%" height="100%">
         <RadialBarChart cx="50%" cy="50%" innerRadius="65%" outerRadius="90%" data={data} startAngle={90} endAngle={-270}>
           <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-          <RadialBar dataKey="value" cornerRadius={4} background={{ fill: "#1f2937" }} />
+          <RadialBar dataKey="value" cornerRadius={4} background={{ fill: "#E2E8F0" }} />
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-sora text-2xl font-bold text-white">{pct}</span>
-        <span className="text-xs text-gray-500">/ 100</span>
+        <span className="text-2xl font-bold text-slate-900">{pct}</span>
+        <span className="text-xs text-slate-400">/ 100</span>
       </div>
     </div>
   );
@@ -42,51 +42,47 @@ export default function CandidateDetailPage() {
   const { data: assessment, isLoading: assLoading } = useAssessment(applicationId);
   const { data: application } = useQuery({
     queryKey: ["application", applicationId],
-    queryFn: async () => {
-      const { data } = await applicationsApi.get(applicationId);
-      return data;
-    },
+    queryFn: async () => { const { data } = await applicationsApi.get(applicationId); return data; },
     enabled: !!applicationId,
   });
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/recruiter/jobs/${jobId}`}>
           <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
         </Link>
-        <h1 className="font-sora text-xl font-bold text-white">Candidate Profile</h1>
+        <h1 className="text-xl font-bold text-slate-900">Candidate Profile</h1>
       </div>
 
       <div className="flex gap-6 h-[calc(100vh-11rem)]">
-        {/* Left panel 60% */}
-        <div className="flex-[6] min-w-0 overflow-y-auto pr-2 space-y-6">
-          {/* Candidate header */}
+        {/* Left panel */}
+        <div className="flex-[6] min-w-0 overflow-y-auto pr-2 space-y-5">
           <Card>
             <div className="flex items-start gap-5">
               <div className="flex-shrink-0">
                 {assessment?.composite_score != null ? (
                   <CompositeRing score={assessment.composite_score} />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center">
-                    <span className="text-[#00d4aa] text-xl font-bold">{candidateId.charAt(0).toUpperCase()}</span>
+                  <div className="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <span className="text-blue-600 text-xl font-bold">{candidateId.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap mb-1">
-                  <h2 className="font-sora text-lg font-bold text-white">
-                    {assessment?.resume_details?.llm_summary ? "Candidate" : "Candidate Profile"}
-                  </h2>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 className="text-lg font-bold text-slate-900">Candidate Profile</h2>
                   {assessment?.status && (
-                    <Badge variant={assessment.status === "completed" ? "green" : assessment.status === "failed" ? "red" : "amber"} pulse={assessment.status === "processing"}>
+                    <Badge
+                      variant={assessment.status === "completed" ? "green" : assessment.status === "failed" ? "red" : "amber"}
+                      pulse={assessment.status === "processing"}
+                    >
                       {assessment.status}
                     </Badge>
                   )}
                 </div>
                 {application && (
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       Applied {new Date(application.submitted_at).toLocaleDateString()}
@@ -100,15 +96,15 @@ export default function CandidateDetailPage() {
                 )}
 
                 {assessment?.composite_score != null && (
-                  <div className="mt-3 flex items-center gap-6 text-sm">
+                  <div className="flex items-center gap-6 text-sm">
                     <div>
-                      <span className="text-gray-500 text-xs">Composite Score</span>
-                      <div className="font-bold text-[#00d4aa] text-xl">{Math.round(assessment.composite_score * 100)}</div>
+                      <span className="text-xs text-slate-400">Composite Score</span>
+                      <div className="font-bold text-blue-600 text-xl">{Math.round(assessment.composite_score * 100)}</div>
                     </div>
                     {assessment.baseline_score != null && (
                       <div>
-                        <span className="text-gray-500 text-xs">Resume-only Baseline</span>
-                        <div className="font-bold text-white text-xl">{Math.round(assessment.baseline_score * 100)}</div>
+                        <span className="text-xs text-slate-400">Resume-only Baseline</span>
+                        <div className="font-bold text-slate-900 text-xl">{Math.round(assessment.baseline_score * 100)}</div>
                       </div>
                     )}
                   </div>
@@ -116,13 +112,12 @@ export default function CandidateDetailPage() {
               </div>
             </div>
 
-            {/* Weights used */}
             {assessment?.weights_used && (
-              <div className="mt-4 pt-4 border-t border-gray-800">
-                <p className="text-xs text-gray-500 mb-2">Weights used in this assessment:</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-400 mb-2">Weights used in this assessment</p>
+                <div className="flex flex-wrap gap-1.5">
                   {Object.entries(assessment.weights_used).map(([k, v]) => (
-                    <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
+                    <span key={k} className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                       {k.replace("_", " ")}: {Math.round((v as number) * 100)}%
                     </span>
                   ))}
@@ -131,47 +126,45 @@ export default function CandidateDetailPage() {
             )}
           </Card>
 
-          {/* LLM Summary */}
           {assessment?.resume_details?.llm_summary && (
             <Card>
-              <h3 className="font-sora text-sm font-semibold text-white mb-2">Profile Summary</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">{assessment.resume_details.llm_summary}</p>
+              <h3 className="text-sm font-semibold text-slate-900 mb-2">Profile Summary</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{assessment.resume_details.llm_summary}</p>
             </Card>
           )}
 
-          {/* Score breakdown */}
           {assLoading && (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
           )}
+
           {assessment && (
             <div>
-              <h3 className="font-sora text-sm font-semibold text-white mb-3">Score Breakdown</h3>
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Score Breakdown</h3>
               <ScoreBreakdownCard assessment={assessment} />
             </div>
           )}
 
-          {/* Errors */}
           {assessment?.error_log && Object.keys(assessment.error_log).length > 0 && (
-            <Card>
-              <h3 className="font-sora text-sm font-semibold text-amber-400 mb-2">Assessment Warnings</h3>
+            <Card className="border-amber-200 bg-amber-50">
+              <h3 className="text-sm font-semibold text-amber-800 mb-2">Assessment Warnings</h3>
               {Object.entries(assessment.error_log).map(([k, v]) => (
-                <div key={k} className="text-xs text-gray-500 mb-1">
-                  <span className="text-amber-400">{k}:</span> {String(v)}
+                <div key={k} className="text-xs text-amber-700 mb-1">
+                  <span className="font-medium">{k}:</span> {String(v)}
                 </div>
               ))}
             </Card>
           )}
         </div>
 
-        {/* Right panel 40% */}
+        {/* Right panel — RAG chatbot */}
         <div className="flex-[4] min-w-[320px] sticky top-0 h-full">
           {applicationId ? (
             <RAGChatbot applicationId={applicationId} />
           ) : (
             <Card className="h-full flex items-center justify-center">
-              <p className="text-gray-500 text-sm">No application ID provided</p>
+              <p className="text-slate-400 text-sm">No application ID provided</p>
             </Card>
           )}
         </div>

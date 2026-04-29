@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { FileText, Github, MessageSquare, Globe, BarChart2, Zap, Users, TrendingUp } from "lucide-react";
 
@@ -20,129 +19,93 @@ const stats = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#0a0f1e] text-gray-100 overflow-hidden">
-      {/* Grid background */}
-      <div className="fixed inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: "linear-gradient(rgba(0,212,170,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.05) 1px,transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Hero */}
-      <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center">
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-          <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest text-[#00d4aa] uppercase mb-6 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-500/5">
-            Final Year Project · QMUL
-          </span>
-
-          <h1 className="font-sora text-5xl md:text-7xl font-bold leading-tight mb-4">
-            Beyond the{" "}
-            <span className="text-[#00d4aa] relative">
-              Resume.
-              <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-teal-500 to-transparent" />
-            </span>
-          </h1>
-
-          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            NexHire fuses signals from 5 data sources — Resume, GitHub, Stack Overflow, Cover Letter, and Portfolio — into a single ranked candidate list using AI-powered multi-modal assessment.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/recruiter/dashboard">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-8 py-3.5 bg-[#00d4aa] text-[#0a0f1e] font-semibold rounded-xl text-base hover:bg-[#00b894] transition-colors shadow-lg shadow-teal-500/20"
-              >
-                I&apos;m a Recruiter →
-              </motion.button>
+    <main className="min-h-screen bg-[#0F172A] text-white">
+      {/* Nav */}
+      <nav className="border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <span className="font-bold text-lg tracking-tight text-white">NexHire</span>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-sm text-slate-400 hover:text-white transition-colors px-4 py-2">
+              Sign in
             </Link>
-            <Link href="/candidate/jobs">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-8 py-3.5 bg-[#1f2937] text-gray-100 font-semibold rounded-xl text-base border border-gray-700 hover:border-gray-600 hover:bg-[#374151] transition-colors"
-              >
-                I&apos;m a Candidate
-              </motion.button>
+            <Link href="/register" className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              Get started
             </Link>
           </div>
-        </motion.div>
+        </div>
+      </nav>
 
-        {/* Scroll indicator */}
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-10 text-gray-600 text-sm flex flex-col items-center gap-1"
-        >
-          <span>Scroll to explore</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </motion.div>
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
+        <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest text-blue-400 uppercase mb-6 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/5">
+          QMUL CS Final Year Project
+        </span>
+
+        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-5 tracking-tight">
+          Hire beyond the resume.
+        </h1>
+
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+          NexHire fuses signals from five data sources — Resume, GitHub, Stack Overflow, Cover Letter, and Portfolio — into a single ranked candidate list using AI-powered multi-modal assessment.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/recruiter/dashboard">
+            <button className="px-7 py-3 bg-blue-600 text-white font-semibold rounded-lg text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+              Recruiter portal →
+            </button>
+          </Link>
+          <Link href="/candidate/jobs">
+            <button className="px-7 py-3 bg-slate-800 text-slate-200 font-semibold rounded-lg text-sm border border-slate-700 hover:bg-slate-700 transition-colors">
+              Candidate portal
+            </button>
+          </Link>
+        </div>
       </section>
 
       {/* Stats strip */}
-      <section className="relative z-10 border-y border-gray-800 bg-[#111827]/60 backdrop-blur-sm">
+      <section className="border-y border-slate-800 bg-slate-800/30">
         <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-3"
-            >
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center flex-shrink-0">
-                <s.icon className="w-5 h-5 text-[#00d4aa]" />
+          {stats.map((s) => (
+            <div key={s.label} className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <s.icon className="w-4 h-4 text-blue-400" />
               </div>
               <div>
                 <div className="font-semibold text-sm text-white">{s.label}</div>
-                <div className="text-xs text-gray-500">{s.desc}</div>
+                <div className="text-xs text-slate-500">{s.desc}</div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Modality cards */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="font-sora text-3xl font-bold mb-3">Five Assessment Dimensions</h2>
-          <p className="text-gray-400">Each modality contributes a weighted score to the final composite ranking.</p>
-        </motion.div>
+      {/* Modalities */}
+      <section className="max-w-5xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-bold mb-3">Five Assessment Dimensions</h2>
+          <p className="text-slate-400 text-sm">Each modality contributes a weighted score to the final composite ranking.</p>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {modalities.map((m, i) => (
-            <motion.div
+          {modalities.map((m) => (
+            <div
               key={m.label}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="rounded-2xl bg-[#111827] border border-gray-800 p-5 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/5 transition-all duration-300 group"
+              className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-5 hover:border-slate-600 transition-colors"
             >
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center mb-3 group-hover:bg-teal-500/20 transition-colors">
-                <m.icon className="w-5 h-5 text-[#00d4aa]" />
+              <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
+                <m.icon className="w-4 h-4 text-blue-400" />
               </div>
               <div className="font-semibold text-sm text-white mb-1">{m.label}</div>
-              <div className="text-xs text-gray-500 leading-relaxed">{m.desc}</div>
-            </motion.div>
+              <div className="text-xs text-slate-500 leading-relaxed">{m.desc}</div>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* CTA footer */}
-      <section className="relative z-10 text-center pb-20 px-6">
-        <p className="text-gray-600 text-sm">
-          Built for QMUL CS Final Year Project · Powered by OpenAI GPT-4o-mini + SBERT + pgvector
+      <section className="text-center pb-16 px-6">
+        <p className="text-slate-600 text-xs">
+          Built for QMUL CS Final Year Project · OpenAI GPT-4o-mini + SBERT + pgvector
         </p>
       </section>
     </main>

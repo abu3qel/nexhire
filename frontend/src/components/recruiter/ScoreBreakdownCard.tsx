@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import { FileText, Github, MessageSquare, Globe, Award } from "lucide-react";
 import { Assessment } from "@/lib/types";
 import { ScoreBar } from "@/components/ui/ScoreBar";
@@ -59,39 +58,34 @@ const MODALITIES = [
 export function ScoreBreakdownCard({ assessment }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {MODALITIES.map((m, i) => {
+      {MODALITIES.map((m) => {
         const score = assessment[m.scoreKey];
-        const details = assessment[m.detailsKey] as Parameters<typeof m.getDetail>[0];
-        const detail = details ? m.getDetail(details) : null;
+        const details = assessment[m.detailsKey];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const detail = details ? (m.getDetail as (d: unknown) => string | null)(details) : null;
 
         return (
-          <motion.div
-            key={m.key}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className="rounded-xl bg-[#111827] border border-gray-800 p-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0">
-                <m.icon className="w-4 h-4 text-[#00d4aa]" />
+          <div key={m.key} className="rounded-xl bg-white border border-slate-200 shadow-sm p-4">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <m.icon className="w-4 h-4 text-blue-600" />
               </div>
-              <span className="text-sm font-medium text-gray-300">{m.label}</span>
+              <span className="text-sm font-semibold text-slate-700">{m.label}</span>
             </div>
 
             {score != null ? (
               <>
-                <div className="text-2xl font-bold font-sora text-white mb-2">
+                <div className="text-2xl font-bold text-slate-900 mb-2">
                   {Math.round(score * 100)}
-                  <span className="text-sm text-gray-500 font-normal">/100</span>
+                  <span className="text-sm text-slate-400 font-normal"> /100</span>
                 </div>
                 <ScoreBar value={score} size="md" showLabel={false} className="mb-2" />
-                {detail && <p className="text-xs text-gray-500 leading-relaxed">{detail}</p>}
+                {detail && <p className="text-xs text-slate-500 leading-relaxed mt-1">{detail}</p>}
               </>
             ) : (
-              <div className="text-sm text-gray-600">Not provided</div>
+              <div className="text-sm text-slate-400">Not provided</div>
             )}
-          </motion.div>
+          </div>
         );
       })}
     </div>

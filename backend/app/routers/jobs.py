@@ -25,6 +25,17 @@ async def create_job(
     return job
 
 
+@router.get("/my", response_model=list[JobOut])
+async def my_jobs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_recruiter),
+):
+    result = await db.execute(
+        select(Job).where(Job.recruiter_id == current_user.id).order_by(Job.created_at.desc())
+    )
+    return result.scalars().all()
+
+
 @router.get("/", response_model=list[JobOut])
 async def list_jobs(
     skip: int = Query(0, ge=0),

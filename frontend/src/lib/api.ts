@@ -40,6 +40,7 @@ export const authApi = {
 
 // Jobs
 export const jobsApi = {
+  myJobs: () => api.get("/jobs/my"),
   list: (skip = 0, limit = 20) => api.get(`/jobs/?skip=${skip}&limit=${limit}`),
   get: (id: string) => api.get(`/jobs/${id}`),
   create: (data: unknown) => api.post("/jobs/", data),

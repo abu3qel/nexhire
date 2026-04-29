@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,52 +49,44 @@ export default function RegisterPage() {
     }
   };
 
+  const inputCls = "w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition";
+
   return (
-    <div className="min-h-screen bg-[#0a0f1e] flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex w-1/2 flex-col justify-center items-start p-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#0d1a2e] to-[#0a0f1e]" />
-        <div className="absolute inset-0"
-          style={{
-            backgroundImage: "linear-gradient(rgba(0,212,170,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.05) 1px,transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        <div className="relative z-10">
-          <div className="text-[#00d4aa] font-sora text-2xl font-bold mb-2">NexHire</div>
-          <h2 className="font-sora text-4xl font-bold text-white leading-tight mb-4">
+    <div className="min-h-screen flex">
+      {/* Left branding panel */}
+      <div className="hidden lg:flex w-5/12 bg-[#1E293B] flex-col justify-between p-12">
+        <div className="text-white font-bold text-xl tracking-tight">NexHire</div>
+        <div>
+          <h2 className="text-3xl font-bold text-white leading-snug mb-4">
             Join the future<br />of technical hiring.
           </h2>
-          <p className="text-gray-400 text-lg max-w-sm">
-            Recruiters discover exceptional engineers. Candidates get fairly assessed.
+          <p className="text-slate-400 text-base leading-relaxed max-w-xs">
+            Recruiters discover exceptional engineers. Candidates get fairly assessed on what matters most.
           </p>
         </div>
+        <p className="text-slate-600 text-xs">QMUL CS Final Year Project</p>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 bg-[#111827]">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-sm"
-        >
-          <h1 className="font-sora text-2xl font-bold text-white mb-2">Create account</h1>
-          <p className="text-gray-400 text-sm mb-8">
+      {/* Right form panel */}
+      <div className="flex-1 bg-white flex flex-col justify-center items-center px-8">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Create account</h1>
+          <p className="text-slate-500 text-sm mb-8">
             Already registered?{" "}
-            <Link href="/login" className="text-[#00d4aa] hover:underline">Sign in</Link>
+            <Link href="/login" className="text-blue-600 hover:underline font-medium">Sign in</Link>
           </p>
 
           {/* Role toggle */}
-          <div className="flex rounded-xl bg-[#0a0f1e] p-1 mb-6 border border-gray-800">
+          <div className="flex rounded-lg bg-slate-100 p-1 mb-6 border border-slate-200">
             {(["candidate", "recruiter"] as const).map((r) => (
               <button
                 key={r}
                 type="button"
                 onClick={() => handleRoleChange(r)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 capitalize ${
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
                   role === r
-                    ? "bg-[#00d4aa] text-[#0a0f1e]"
-                    : "text-gray-400 hover:text-gray-200"
+                    ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                    : "text-slate-500 hover:text-slate-700"
                 }`}
               >
                 {r}
@@ -104,35 +96,21 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Full name</label>
-              <input
-                {...register("full_name")}
-                placeholder="Jane Smith"
-                className="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-teal-500/60 transition-colors"
-              />
-              {errors.full_name && <p className="text-red-400 text-xs mt-1">{errors.full_name.message}</p>}
+              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Full name</label>
+              <input {...register("full_name")} placeholder="Jane Smith" className={inputCls} />
+              {errors.full_name && <p className="text-red-600 text-xs mt-1">{errors.full_name.message}</p>}
             </div>
 
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Email</label>
-              <input
-                {...register("email")}
-                type="email"
-                placeholder="you@example.com"
-                className="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-teal-500/60 transition-colors"
-              />
-              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email address</label>
+              <input {...register("email")} type="email" placeholder="you@example.com" className={inputCls} />
+              {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Password</label>
-              <input
-                {...register("password")}
-                type="password"
-                placeholder="Minimum 8 characters"
-                className="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-teal-500/60 transition-colors"
-              />
-              {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Password</label>
+              <input {...register("password")} type="password" placeholder="Minimum 8 characters" className={inputCls} />
+              {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password.message}</p>}
             </div>
 
             <AnimatePresence>
@@ -142,12 +120,8 @@ export default function RegisterPage() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                 >
-                  <label className="text-sm text-gray-400 mb-1 block">Company name</label>
-                  <input
-                    {...register("company_name")}
-                    placeholder="Acme Corp"
-                    className="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-teal-500/60 transition-colors"
-                  />
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Company name</label>
+                  <input {...register("company_name")} placeholder="Acme Corp" className={inputCls} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -156,7 +130,7 @@ export default function RegisterPage() {
               Create account
             </Button>
           </form>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

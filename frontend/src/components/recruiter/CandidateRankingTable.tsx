@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { RankedCandidate, ApplicationStatus } from "@/lib/types";
@@ -15,33 +15,35 @@ interface Props {
 }
 
 function ScoreCell({ value }: { value?: number }) {
-  if (value == null) return <span className="text-gray-600 text-xs">—</span>;
+  if (value == null) return <span className="text-slate-300 text-xs">—</span>;
   const pct = Math.round(value * 100);
-  const color = value >= 0.7 ? "text-[#00d4aa]" : value >= 0.4 ? "text-amber-400" : "text-red-400";
+  const color = value >= 0.7 ? "text-emerald-600" : value >= 0.4 ? "text-amber-600" : "text-red-600";
   return (
-    <div className="min-w-[60px]">
-      <div className={`text-xs font-mono font-semibold ${color} mb-1`}>{pct}%</div>
+    <div className="min-w-[56px]">
+      <div className={`text-xs font-semibold ${color} mb-1`}>{pct}%</div>
       <ScoreBar value={value} showLabel={false} size="sm" />
     </div>
   );
 }
 
 function AssessmentBadge({ status }: { status: string }) {
-  const map: Record<string, { variant: "amber" | "teal" | "green" | "red"; label: string; pulse?: boolean }> = {
-    pending: { variant: "amber", label: "Pending", pulse: true },
-    processing: { variant: "teal", label: "Processing", pulse: true },
-    completed: { variant: "green", label: "Done" },
-    failed: { variant: "red", label: "Failed" },
+  const map: Record<string, { variant: "amber" | "blue" | "green" | "red"; label: string; pulse?: boolean }> = {
+    pending:    { variant: "amber", label: "Pending", pulse: true },
+    processing: { variant: "blue",  label: "Processing", pulse: true },
+    completed:  { variant: "green", label: "Done" },
+    failed:     { variant: "red",   label: "Failed" },
   };
-  const cfg = map[status] || { variant: "gray" as const, label: status };
-  return <Badge variant={cfg.variant} pulse={cfg.pulse}>{cfg.label}</Badge>;
+  const cfg = map[status] ?? { variant: "gray" as const, label: status };
+  return <Badge variant={cfg.variant as "amber" | "blue" | "green" | "red"} pulse={cfg.pulse}>{cfg.label}</Badge>;
 }
 
 function RankChange({ change }: { change?: number }) {
-  if (change == null || change === 0) return <span className="text-gray-600 text-xs">—</span>;
-  if (change > 0) return <span className="text-[#00d4aa] text-xs font-semibold flex items-center gap-0.5">↑{change}</span>;
-  return <span className="text-red-400 text-xs font-semibold flex items-center gap-0.5">↓{Math.abs(change)}</span>;
+  if (change == null || change === 0) return <span className="text-slate-300 text-xs">—</span>;
+  if (change > 0) return <span className="text-emerald-600 text-xs font-semibold">↑{change}</span>;
+  return <span className="text-red-500 text-xs font-semibold">↓{Math.abs(change)}</span>;
 }
+
+const thCls = "text-left text-xs font-semibold text-slate-500 uppercase tracking-wide py-3 px-4 whitespace-nowrap";
 
 export function CandidateRankingTable({ candidates, jobId, mode = "composite" }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -50,23 +52,29 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
     ? [...candidates].sort((a, b) => (b.composite_score ?? -1) - (a.composite_score ?? -1))
     : [...candidates].sort((a, b) => (b.baseline_score ?? -1) - (a.baseline_score ?? -1));
 
+  if (sorted.length === 0) {
+    return (
+      <div className="text-center py-14 text-slate-400 text-sm">No applications yet</div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-800">
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Rank</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Candidate</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Resume</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Cover Letter</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">GitHub</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">SO</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Portfolio</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Composite</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Δ Rank</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Assessment</th>
-            <th className="text-left text-xs text-gray-500 font-medium pb-3 pr-4">Stage</th>
-            <th className="pb-3" />
+        <thead className="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th className={thCls}>#</th>
+            <th className={thCls}>Candidate</th>
+            <th className={thCls}>Resume</th>
+            <th className={thCls}>Cover Letter</th>
+            <th className={thCls}>GitHub</th>
+            <th className={thCls}>SO</th>
+            <th className={thCls}>Portfolio</th>
+            <th className={thCls}>Score</th>
+            <th className={thCls}>Δ Rank</th>
+            <th className={thCls}>Assessment</th>
+            <th className={thCls}>Stage</th>
+            <th className="py-3 px-4" />
           </tr>
         </thead>
         <tbody>
@@ -74,65 +82,62 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
             const expanded = expandedId === c.application_id;
             return (
               <>
-                <motion.tr
+                <tr
                   key={c.application_id}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="border-b border-gray-800/50 hover:bg-[#1f2937]/50 cursor-pointer transition-colors"
+                  className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
                   onClick={() => setExpandedId(expanded ? null : c.application_id)}
                 >
-                  <td className="py-3 pr-4">
-                    <span className="text-xs font-mono text-gray-400">#{mode === "composite" ? c.rank : c.baseline_rank ?? i + 1}</span>
+                  <td className="py-3 px-4">
+                    <span className="text-xs font-mono font-medium text-slate-400">
+                      {mode === "composite" ? c.rank : (c.baseline_rank ?? i + 1)}
+                    </span>
                   </td>
-                  <td className="py-3 pr-4">
-                    <div className="font-medium text-white">{c.candidate_name}</div>
-                    <div className="text-xs text-gray-500">{c.candidate_email}</div>
+                  <td className="py-3 px-4">
+                    <div className="font-medium text-slate-900 text-sm">{c.candidate_name}</div>
+                    <div className="text-xs text-slate-400">{c.candidate_email}</div>
                   </td>
-                  <td className="py-3 pr-4"><ScoreCell value={c.resume_score} /></td>
-                  <td className="py-3 pr-4"><ScoreCell value={c.cover_letter_score} /></td>
-                  <td className="py-3 pr-4"><ScoreCell value={c.github_score} /></td>
-                  <td className="py-3 pr-4"><ScoreCell value={c.stackoverflow_score} /></td>
-                  <td className="py-3 pr-4"><ScoreCell value={c.portfolio_score} /></td>
-                  <td className="py-3 pr-4">
+                  <td className="py-3 px-4"><ScoreCell value={c.resume_score} /></td>
+                  <td className="py-3 px-4"><ScoreCell value={c.cover_letter_score} /></td>
+                  <td className="py-3 px-4"><ScoreCell value={c.github_score} /></td>
+                  <td className="py-3 px-4"><ScoreCell value={c.stackoverflow_score} /></td>
+                  <td className="py-3 px-4"><ScoreCell value={c.portfolio_score} /></td>
+                  <td className="py-3 px-4">
                     {c.composite_score != null ? (
-                      <span className="text-base font-bold font-mono text-[#00d4aa]">
+                      <span className="text-base font-bold font-mono text-blue-600">
                         {Math.round(c.composite_score * 100)}
                       </span>
-                    ) : <span className="text-gray-600">—</span>}
+                    ) : <span className="text-slate-300">—</span>}
                   </td>
-                  <td className="py-3 pr-4"><RankChange change={c.rank_change} /></td>
-                  <td className="py-3 pr-4"><AssessmentBadge status={c.assessment_status} /></td>
-                  <td className="py-3 pr-4" onClick={e => e.stopPropagation()}>
+                  <td className="py-3 px-4"><RankChange change={c.rank_change} /></td>
+                  <td className="py-3 px-4"><AssessmentBadge status={c.assessment_status} /></td>
+                  <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
                     <StatusSelector
                       applicationId={c.application_id}
                       currentStatus={c.application_status as ApplicationStatus}
                       jobId={jobId}
                     />
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/recruiter/jobs/${jobId}/candidates/${c.candidate_id}?applicationId=${c.application_id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs text-[#00d4aa] hover:underline"
+                        onClick={e => e.stopPropagation()}
+                        className="text-xs text-blue-600 hover:underline font-medium whitespace-nowrap"
                       >
-                        View Profile
+                        View
                       </Link>
-                      {expanded ? <ChevronUp className="w-3 h-3 text-gray-500" /> : <ChevronDown className="w-3 h-3 text-gray-500" />}
+                      {expanded
+                        ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                        : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
                     </div>
                   </td>
-                </motion.tr>
+                </tr>
 
                 <AnimatePresence>
                   {expanded && (
-                    <motion.tr
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
+                    <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       <td colSpan={12} className="py-0">
-                        <div className="bg-[#0a0f1e] border border-teal-500/10 rounded-xl mx-2 my-2 p-4">
+                        <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             {[
                               { label: "Resume", score: c.resume_score },
@@ -142,24 +147,29 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
                               { label: "Portfolio", score: c.portfolio_score },
                             ].map(({ label, score }) => (
                               <div key={label}>
-                                <div className="text-xs text-gray-500 mb-1">{label}</div>
-                                {score != null ? (
-                                  <ScoreBar value={score} size="md" />
-                                ) : (
-                                  <span className="text-xs text-gray-600">Not provided</span>
-                                )}
+                                <div className="text-xs text-slate-500 mb-1 font-medium">{label}</div>
+                                {score != null
+                                  ? <ScoreBar value={score} size="md" />
+                                  : <span className="text-xs text-slate-300">Not provided</span>
+                                }
                               </div>
                             ))}
                           </div>
-                          <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
-                              Baseline (resume-only): <span className="text-white">{c.baseline_score != null ? `${Math.round(c.baseline_score * 100)}%` : "—"}</span>
-                              {" "} · Rank change: <span className={c.rank_change && c.rank_change > 0 ? "text-[#00d4aa]" : "text-red-400"}>
-                                {c.rank_change != null ? (c.rank_change > 0 ? `↑${c.rank_change}` : `↓${Math.abs(c.rank_change)}`) : "—"}
+                          <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
+                            <span className="text-xs text-slate-400">
+                              Baseline (resume-only):{" "}
+                              <span className="font-medium text-slate-700">
+                                {c.baseline_score != null ? `${Math.round(c.baseline_score * 100)}%` : "—"}
+                              </span>
+                              {" · "}Rank change:{" "}
+                              <span className={c.rank_change && c.rank_change > 0 ? "text-emerald-600 font-medium" : "text-red-500 font-medium"}>
+                                {c.rank_change != null
+                                  ? (c.rank_change > 0 ? `↑${c.rank_change}` : `↓${Math.abs(c.rank_change)}`)
+                                  : "—"}
                               </span>
                             </span>
                             <Link href={`/recruiter/jobs/${jobId}/candidates/${c.candidate_id}?applicationId=${c.application_id}`}>
-                              <span className="text-xs text-[#00d4aa] hover:underline">Open full profile →</span>
+                              <span className="text-xs text-blue-600 hover:underline font-medium">Open full profile →</span>
                             </Link>
                           </div>
                         </div>
@@ -172,10 +182,6 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
           })}
         </tbody>
       </table>
-
-      {candidates.length === 0 && (
-        <div className="text-center py-12 text-gray-500 text-sm">No applications yet</div>
-      )}
     </div>
   );
 }
