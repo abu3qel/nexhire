@@ -55,9 +55,9 @@ export default function CandidateDetailPage() {
         <h1 className="text-xl font-bold text-slate-900">Candidate Profile</h1>
       </div>
 
-      <div className="flex gap-6 h-[calc(100vh-11rem)]">
+      <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-11rem)]">
         {/* Left panel */}
-        <div className="flex-[6] min-w-0 overflow-y-auto pr-2 space-y-5">
+        <div className="flex-[6] min-w-0 lg:overflow-y-auto space-y-5">
           <Card>
             <div className="flex items-start gap-5">
               <div className="flex-shrink-0">
@@ -159,7 +159,7 @@ export default function CandidateDetailPage() {
         </div>
 
         {/* Right panel — RAG chatbot */}
-        <div className="flex-[4] min-w-[320px] sticky top-0 h-full">
+        <div className="lg:flex-[4] lg:min-w-[320px] lg:sticky lg:top-0 lg:h-full h-[500px]">
           {applicationId ? (
             <RAGChatbot applicationId={applicationId} />
           ) : (

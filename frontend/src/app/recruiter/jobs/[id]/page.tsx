@@ -45,7 +45,7 @@ export default function JobDetailPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-start gap-3 mb-6">
+      <div className="flex items-start gap-3 mb-6 flex-wrap">
         <Link href="/recruiter/jobs">
           <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
         </Link>
@@ -116,7 +116,7 @@ export default function JobDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-0.5 mb-5 bg-white rounded-lg p-1 w-fit border border-slate-200 shadow-sm">
+      <div className="flex gap-0.5 mb-5 bg-white rounded-lg p-1 w-full sm:w-fit border border-slate-200 shadow-sm overflow-x-auto">
         {TABS.map((tab, i) => (
           <button
             key={tab}

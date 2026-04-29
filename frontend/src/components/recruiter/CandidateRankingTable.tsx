@@ -60,20 +60,20 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm min-w-[640px]">
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
             <th className={thCls}>#</th>
             <th className={thCls}>Candidate</th>
-            <th className={thCls}>Resume</th>
-            <th className={thCls}>Cover Letter</th>
-            <th className={thCls}>GitHub</th>
-            <th className={thCls}>SO</th>
-            <th className={thCls}>Portfolio</th>
+            <th className={`${thCls} hidden sm:table-cell`}>Resume</th>
+            <th className={`${thCls} hidden lg:table-cell`}>Cover Letter</th>
+            <th className={`${thCls} hidden md:table-cell`}>GitHub</th>
+            <th className={`${thCls} hidden lg:table-cell`}>SO</th>
+            <th className={`${thCls} hidden lg:table-cell`}>Portfolio</th>
             <th className={thCls}>Score</th>
-            <th className={thCls}>Δ Rank</th>
-            <th className={thCls}>Assessment</th>
-            <th className={thCls}>Stage</th>
+            <th className={`${thCls} hidden sm:table-cell`}>Δ Rank</th>
+            <th className={`${thCls} hidden sm:table-cell`}>Assessment</th>
+            <th className={`${thCls} hidden md:table-cell`}>Stage</th>
             <th className="py-3 px-4" />
           </tr>
         </thead>
@@ -96,11 +96,11 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
                     <div className="font-medium text-slate-900 text-sm">{c.candidate_name}</div>
                     <div className="text-xs text-slate-400">{c.candidate_email}</div>
                   </td>
-                  <td className="py-3 px-4"><ScoreCell value={c.resume_score} /></td>
-                  <td className="py-3 px-4"><ScoreCell value={c.cover_letter_score} /></td>
-                  <td className="py-3 px-4"><ScoreCell value={c.github_score} /></td>
-                  <td className="py-3 px-4"><ScoreCell value={c.stackoverflow_score} /></td>
-                  <td className="py-3 px-4"><ScoreCell value={c.portfolio_score} /></td>
+                  <td className="py-3 px-4 hidden sm:table-cell"><ScoreCell value={c.resume_score} /></td>
+                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.cover_letter_score} /></td>
+                  <td className="py-3 px-4 hidden md:table-cell"><ScoreCell value={c.github_score} /></td>
+                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.stackoverflow_score} /></td>
+                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.portfolio_score} /></td>
                   <td className="py-3 px-4">
                     {c.composite_score != null ? (
                       <span className="text-base font-bold font-mono text-blue-600">
@@ -108,9 +108,9 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
                       </span>
                     ) : <span className="text-slate-300">—</span>}
                   </td>
-                  <td className="py-3 px-4"><RankChange change={c.rank_change} /></td>
-                  <td className="py-3 px-4"><AssessmentBadge status={c.assessment_status} /></td>
-                  <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
+                  <td className="py-3 px-4 hidden sm:table-cell"><RankChange change={c.rank_change} /></td>
+                  <td className="py-3 px-4 hidden sm:table-cell"><AssessmentBadge status={c.assessment_status} /></td>
+                  <td className="py-3 px-4 hidden md:table-cell" onClick={e => e.stopPropagation()}>
                     <StatusSelector
                       applicationId={c.application_id}
                       currentStatus={c.application_status as ApplicationStatus}
