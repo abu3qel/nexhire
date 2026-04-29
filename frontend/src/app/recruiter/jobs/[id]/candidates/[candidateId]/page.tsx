@@ -1,0 +1,181 @@
+"use client";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowLeft, Calendar } from "lucide-react";
+import { useAssessment } from "@/hooks/useAssessment";
+import { useQuery } from "@tanstack/react-query";
+import { applicationsApi } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { ScoreBreakdownCard } from "@/components/recruiter/ScoreBreakdownCard";
+import { StatusSelector } from "@/components/recruiter/StatusSelector";
+import { ApplicationStatus } from "@/lib/types";
+import { RAGChatbot } from "@/components/recruiter/RAGChatbot";
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "recharts";
+
+function CompositeRing({ score }: { score: number }) {
+  const pct = Math.round(score * 100);
+  const data = [{ name: "score", value: pct, fill: pct >= 70 ? "#00d4aa" : pct >= 40 ? "#f59e0b" : "#ef4444" }];
+  return (
+    <div className="relative w-36 h-36">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadialBarChart cx="50%" cy="50%" innerRadius="65%" outerRadius="90%" data={data} startAngle={90} endAngle={-270}>
+          <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+          <RadialBar dataKey="value" cornerRadius={4} background={{ fill: "#1f2937" }} />
+        </RadialBarChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-sora text-2xl font-bold text-white">{pct}</span>
+        <span className="text-xs text-gray-500">/ 100</span>
+      </div>
+    </div>
+  );
+}
+
+export default function CandidateDetailPage() {
+  const { id: jobId, candidateId } = useParams<{ id: string; candidateId: string }>();
+  const searchParams = useSearchParams();
+  const applicationId = searchParams.get("applicationId") || "";
+
+  const { data: assessment, isLoading: assLoading } = useAssessment(applicationId);
+  const { data: application } = useQuery({
+    queryKey: ["application", applicationId],
+    queryFn: async () => {
+      const { data } = await applicationsApi.get(applicationId);
+      return data;
+    },
+    enabled: !!applicationId,
+  });
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link href={`/recruiter/jobs/${jobId}`}>
+          <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
+        </Link>
+        <h1 className="font-sora text-xl font-bold text-white">Candidate Profile</h1>
+      </div>
+
+      <div className="flex gap-6 h-[calc(100vh-11rem)]">
+        {/* Left panel 60% */}
+        <div className="flex-[6] min-w-0 overflow-y-auto pr-2 space-y-6">
+          {/* Candidate header */}
+          <Card>
+            <div className="flex items-start gap-5">
+              <div className="flex-shrink-0">
+                {assessment?.composite_score != null ? (
+                  <CompositeRing score={assessment.composite_score} />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center">
+                    <span className="text-[#00d4aa] text-xl font-bold">{candidateId.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap mb-1">
+                  <h2 className="font-sora text-lg font-bold text-white">
+                    {assessment?.resume_details?.llm_summary ? "Candidate" : "Candidate Profile"}
+                  </h2>
+                  {assessment?.status && (
+                    <Badge variant={assessment.status === "completed" ? "green" : assessment.status === "failed" ? "red" : "amber"} pulse={assessment.status === "processing"}>
+                      {assessment.status}
+                    </Badge>
+                  )}
+                </div>
+                {application && (
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      Applied {new Date(application.submitted_at).toLocaleDateString()}
+                    </span>
+                    <StatusSelector
+                      applicationId={applicationId}
+                      currentStatus={application.status as ApplicationStatus}
+                      jobId={jobId}
+                    />
+                  </div>
+                )}
+
+                {assessment?.composite_score != null && (
+                  <div className="mt-3 flex items-center gap-6 text-sm">
+                    <div>
+                      <span className="text-gray-500 text-xs">Composite Score</span>
+                      <div className="font-bold text-[#00d4aa] text-xl">{Math.round(assessment.composite_score * 100)}</div>
+                    </div>
+                    {assessment.baseline_score != null && (
+                      <div>
+                        <span className="text-gray-500 text-xs">Resume-only Baseline</span>
+                        <div className="font-bold text-white text-xl">{Math.round(assessment.baseline_score * 100)}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Weights used */}
+            {assessment?.weights_used && (
+              <div className="mt-4 pt-4 border-t border-gray-800">
+                <p className="text-xs text-gray-500 mb-2">Weights used in this assessment:</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(assessment.weights_used).map(([k, v]) => (
+                    <span key={k} className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
+                      {k.replace("_", " ")}: {Math.round((v as number) * 100)}%
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* LLM Summary */}
+          {assessment?.resume_details?.llm_summary && (
+            <Card>
+              <h3 className="font-sora text-sm font-semibold text-white mb-2">Profile Summary</h3>
+              <p className="text-sm text-gray-400 leading-relaxed">{assessment.resume_details.llm_summary}</p>
+            </Card>
+          )}
+
+          {/* Score breakdown */}
+          {assLoading && (
+            <div className="flex justify-center py-8">
+              <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {assessment && (
+            <div>
+              <h3 className="font-sora text-sm font-semibold text-white mb-3">Score Breakdown</h3>
+              <ScoreBreakdownCard assessment={assessment} />
+            </div>
+          )}
+
+          {/* Errors */}
+          {assessment?.error_log && Object.keys(assessment.error_log).length > 0 && (
+            <Card>
+              <h3 className="font-sora text-sm font-semibold text-amber-400 mb-2">Assessment Warnings</h3>
+              {Object.entries(assessment.error_log).map(([k, v]) => (
+                <div key={k} className="text-xs text-gray-500 mb-1">
+                  <span className="text-amber-400">{k}:</span> {String(v)}
+                </div>
+              ))}
+            </Card>
+          )}
+        </div>
+
+        {/* Right panel 40% */}
+        <div className="flex-[4] min-w-[320px] sticky top-0 h-full">
+          {applicationId ? (
+            <RAGChatbot applicationId={applicationId} />
+          ) : (
+            <Card className="h-full flex items-center justify-center">
+              <p className="text-gray-500 text-sm">No application ID provided</p>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
