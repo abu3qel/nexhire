@@ -1,28 +1,26 @@
-import os
-import asyncio
-from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSessionLocal
 from app.models.application import Application
 from app.models.assessment import Assessment
-from app.models.job import Job
-from app.models.user import User
-from app.config import settings
 from app.services.modalities.resume_module import analyse_resume
 from app.services.modalities.cover_letter_module import analyse_cover_letter
 from app.services.modalities.github_module import analyse_github
 from app.services.modalities.stackoverflow_module import analyse_stackoverflow
 from app.services.modalities.portfolio_module import analyse_portfolio
-from app.services.fusion import compute_composite_score, compute_baseline_score
+from app.services.fusion import (
+    compute_composite_score,
+    compute_baseline_score,
+    compute_confidence_scores,
+    build_explanation,
+)
 from app.services.rag_service import ingest_candidate_chunks
 
 
 async def run_pipeline(application_id: str) -> None:
     async with AsyncSessionLocal() as db:
-        # Load application with relationships
         result = await db.execute(
             select(Application)
             .options(
@@ -54,37 +52,31 @@ async def run_pipeline(application_id: str) -> None:
         stackoverflow_result = None
         portfolio_result = None
 
-        # Resume (required)
         try:
             resume_result = await analyse_resume(application.raw_resume_text, job.description)
         except Exception as e:
             error_log["resume"] = str(e)
 
-        # Cover letter (optional)
         try:
             cover_letter_result = await analyse_cover_letter(application.raw_cover_letter_text, job.description)
         except Exception as e:
             error_log["cover_letter"] = str(e)
 
-        # GitHub (optional)
         try:
             github_result = await analyse_github(application.github_url, job.description)
         except Exception as e:
             error_log["github"] = str(e)
 
-        # Stack Overflow (optional)
         try:
             stackoverflow_result = await analyse_stackoverflow(application.stackoverflow_url, job.description)
         except Exception as e:
             error_log["stackoverflow"] = str(e)
 
-        # Portfolio (optional)
         try:
             portfolio_result = await analyse_portfolio(application.portfolio_url, job.description)
         except Exception as e:
             error_log["portfolio"] = str(e)
 
-        # Extract scores
         scores = {
             "resume": resume_result["score"] if resume_result else None,
             "cover_letter": cover_letter_result["score"] if cover_letter_result else None,
@@ -93,31 +85,53 @@ async def run_pipeline(application_id: str) -> None:
             "portfolio": portfolio_result["score"] if portfolio_result else None,
         }
 
-        weights = job.modality_weights
-        composite = compute_composite_score(scores, weights)
-        baseline = compute_baseline_score(scores.get("resume"))
+        modality_details = {
+            "resume": resume_result["details"] if resume_result else None,
+            "cover_letter": cover_letter_result["details"] if cover_letter_result else None,
+            "github": github_result["details"] if github_result else None,
+            "stackoverflow": stackoverflow_result["details"] if stackoverflow_result else None,
+            "portfolio": portfolio_result["details"] if portfolio_result else None,
+        }
 
-        # Update assessment
-        assessment.resume_score = scores["resume"]
-        assessment.cover_letter_score = scores["cover_letter"]
-        assessment.github_score = scores["github"]
-        assessment.stackoverflow_score = scores["stackoverflow"]
-        assessment.portfolio_score = scores["portfolio"]
-        assessment.composite_score = composite
-        assessment.baseline_score = baseline
-        assessment.resume_details = resume_result["details"] if resume_result else None
-        assessment.cover_letter_details = cover_letter_result["details"] if cover_letter_result else None
-        assessment.github_details = github_result["details"] if github_result else None
-        assessment.stackoverflow_details = stackoverflow_result["details"] if stackoverflow_result else None
-        assessment.portfolio_details = portfolio_result["details"] if portfolio_result else None
-        assessment.weights_used = weights
-        assessment.error_log = error_log if error_log else None
-        assessment.status = "completed"
-        assessment.completed_at = datetime.utcnow()
+        try:
+            weights = job.modality_weights
+            confidence = compute_confidence_scores(scores, modality_details)
+            composite, effective_weights = compute_composite_score(scores, weights, confidence)
+            baseline = compute_baseline_score(scores.get("resume"))
+            explanation = build_explanation(scores, effective_weights, confidence, composite, baseline)
 
-        await db.commit()
+            assessment.resume_score = scores["resume"]
+            assessment.cover_letter_score = scores["cover_letter"]
+            assessment.github_score = scores["github"]
+            assessment.stackoverflow_score = scores["stackoverflow"]
+            assessment.portfolio_score = scores["portfolio"]
+            assessment.composite_score = composite
+            assessment.baseline_score = baseline
+            assessment.resume_details = modality_details["resume"]
+            assessment.cover_letter_details = modality_details["cover_letter"]
+            assessment.github_details = modality_details["github"]
+            assessment.stackoverflow_details = modality_details["stackoverflow"]
+            assessment.portfolio_details = modality_details["portfolio"]
+            assessment.weights_used = weights
+            assessment.confidence_scores = confidence
+            assessment.explanation = explanation
+            assessment.error_log = error_log if error_log else None
+            assessment.status = "completed"
+            assessment.completed_at = datetime.now(timezone.utc)
 
-        # Ingest RAG chunks
+            await db.commit()
+
+        except Exception as e:
+            error_log["pipeline"] = str(e)
+            try:
+                await db.rollback()
+                assessment.status = "failed"
+                assessment.error_log = error_log
+                await db.commit()
+            except Exception:
+                pass
+            return
+
         try:
             await ingest_candidate_chunks(
                 db=db,
@@ -133,9 +147,9 @@ async def run_pipeline(application_id: str) -> None:
                     "stackoverflow_score": scores["stackoverflow"],
                     "portfolio_score": scores["portfolio"],
                     "composite_score": composite,
-                    "resume_details": resume_result["details"] if resume_result else None,
-                    "github_details": github_result["details"] if github_result else None,
-                    "stackoverflow_details": stackoverflow_result["details"] if stackoverflow_result else None,
+                    "resume_details": modality_details["resume"],
+                    "github_details": modality_details["github"],
+                    "stackoverflow_details": modality_details["stackoverflow"],
                 },
                 candidate_name=application.candidate.full_name,
             )
@@ -144,7 +158,6 @@ async def run_pipeline(application_id: str) -> None:
             assessment.error_log = error_log
             await db.commit()
 
-        # Update status to failed if resume was unavailable
         if scores["resume"] is None:
             assessment.status = "failed"
             await db.commit()

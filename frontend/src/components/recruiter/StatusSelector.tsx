@@ -10,14 +10,14 @@ import { ApplicationStatus } from "@/lib/types";
 
 const STATUSES: { value: ApplicationStatus; label: string; cls: string }[] = [
   { value: "submitted",    label: "Submitted",    cls: "text-amber-700 hover:bg-amber-50" },
-  { value: "under_review", label: "Under Review", cls: "text-blue-700 hover:bg-blue-50" },
+  { value: "under_review", label: "Under Review", cls: "text-brand-700 hover:bg-brand-50" },
   { value: "shortlisted",  label: "Shortlisted",  cls: "text-emerald-700 hover:bg-emerald-50" },
   { value: "rejected",     label: "Rejected",     cls: "text-red-700 hover:bg-red-50" },
 ];
 
 const triggerVariant: Record<ApplicationStatus, string> = {
   submitted:    "bg-amber-50 text-amber-700 border-amber-200",
-  under_review: "bg-blue-50 text-blue-700 border-blue-200",
+  under_review: "bg-brand-50 text-brand-700 border-brand-200",
   shortlisted:  "bg-emerald-50 text-emerald-700 border-emerald-200",
   rejected:     "bg-red-50 text-red-700 border-red-200",
 };
@@ -79,7 +79,7 @@ export function StatusSelector({ applicationId, currentStatus, jobId }: Props) {
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.1 }}
             style={{ position: "absolute", top: pos.top, left: pos.left }}
-            className="z-[9999] w-36 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden"
+            className="z-[9999] w-36 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
           >
             {STATUSES.map(s => (
               <button
@@ -104,7 +104,7 @@ export function StatusSelector({ applicationId, currentStatus, jobId }: Props) {
         ref={buttonRef}
         onClick={openDropdown}
         disabled={loading}
-        className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors disabled:opacity-50 ${triggerVariant[currentStatus] || "bg-slate-100 text-slate-600 border-slate-200"}`}
+        className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors disabled:opacity-50 ${triggerVariant[currentStatus] || "bg-gray-100 text-gray-600 border-gray-200"}`}
       >
         {loading && (
           <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">

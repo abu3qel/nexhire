@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ScoreBreakdownCard } from "@/components/recruiter/ScoreBreakdownCard";
+import { ExplainabilityCard } from "@/components/recruiter/ExplainabilityCard";
 import { StatusSelector } from "@/components/recruiter/StatusSelector";
 import { ApplicationStatus } from "@/lib/types";
 import { RAGChatbot } from "@/components/recruiter/RAGChatbot";
@@ -27,8 +28,8 @@ function CompositeRing({ score }: { score: number }) {
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-slate-900">{pct}</span>
-        <span className="text-xs text-slate-400">/ 100</span>
+        <span className="text-2xl font-bold font-mono text-gray-900">{pct}</span>
+        <span className="text-xs text-gray-400">/ 100</span>
       </div>
     </div>
   );
@@ -52,7 +53,7 @@ export default function CandidateDetailPage() {
         <Link href={`/recruiter/jobs/${jobId}`}>
           <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
         </Link>
-        <h1 className="text-xl font-bold text-slate-900">Candidate Profile</h1>
+        <h1 className="text-xl font-bold text-gray-900">Candidate Profile</h1>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-11rem)]">
@@ -64,14 +65,14 @@ export default function CandidateDetailPage() {
                 {assessment?.composite_score != null ? (
                   <CompositeRing score={assessment.composite_score} />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center">
-                    <span className="text-blue-600 text-xl font-bold">{candidateId.charAt(0).toUpperCase()}</span>
+                  <div className="w-16 h-16 rounded-xl bg-brand-50 flex items-center justify-center">
+                    <span className="text-brand-600 text-xl font-bold">{candidateId.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h2 className="text-lg font-bold text-slate-900">Candidate Profile</h2>
+                  <h2 className="text-lg font-bold text-gray-900">Candidate Profile</h2>
                   {assessment?.status && (
                     <Badge
                       variant={assessment.status === "completed" ? "green" : assessment.status === "failed" ? "red" : "amber"}
@@ -82,7 +83,7 @@ export default function CandidateDetailPage() {
                   )}
                 </div>
                 {application && (
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       Applied {new Date(application.submitted_at).toLocaleDateString()}
@@ -98,13 +99,13 @@ export default function CandidateDetailPage() {
                 {assessment?.composite_score != null && (
                   <div className="flex items-center gap-6 text-sm">
                     <div>
-                      <span className="text-xs text-slate-400">Composite Score</span>
-                      <div className="font-bold text-blue-600 text-xl">{Math.round(assessment.composite_score * 100)}</div>
+                      <span className="text-xs text-gray-400">Composite Score</span>
+                      <div className="font-bold font-mono text-brand-600 text-xl">{Math.round(assessment.composite_score * 100)}</div>
                     </div>
                     {assessment.baseline_score != null && (
                       <div>
-                        <span className="text-xs text-slate-400">Resume-only Baseline</span>
-                        <div className="font-bold text-slate-900 text-xl">{Math.round(assessment.baseline_score * 100)}</div>
+                        <span className="text-xs text-gray-400">Resume-only Baseline</span>
+                        <div className="font-bold font-mono text-gray-900 text-xl">{Math.round(assessment.baseline_score * 100)}</div>
                       </div>
                     )}
                   </div>
@@ -113,11 +114,11 @@ export default function CandidateDetailPage() {
             </div>
 
             {assessment?.weights_used && (
-              <div className="mt-4 pt-4 border-t border-slate-100">
-                <p className="text-xs text-slate-400 mb-2">Weights used in this assessment</p>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-400 mb-2">Weights used in this assessment</p>
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(assessment.weights_used).map(([k, v]) => (
-                    <span key={k} className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                    <span key={k} className="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 border border-gray-200">
                       {k.replace("_", " ")}: {Math.round((v as number) * 100)}%
                     </span>
                   ))}
@@ -128,22 +129,35 @@ export default function CandidateDetailPage() {
 
           {assessment?.resume_details?.llm_summary && (
             <Card>
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">Profile Summary</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{assessment.resume_details.llm_summary}</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Profile Summary</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{assessment.resume_details.llm_summary}</p>
             </Card>
           )}
 
           {assLoading && (
             <div className="flex justify-center py-8">
-              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
-          {assessment && (
+          {(assessment || assLoading) && (
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Score Breakdown</h3>
-              <ScoreBreakdownCard assessment={assessment} />
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Score Breakdown</h3>
+              {assessment && (
+                <ScoreBreakdownCard
+                  assessment={assessment}
+                  application={application ?? undefined}
+                  assessmentStatus={assessment.status}
+                />
+              )}
             </div>
+          )}
+
+          {assessment?.explanation && (
+            <ExplainabilityCard
+              explanation={assessment.explanation}
+              confidenceScores={assessment.confidence_scores}
+            />
           )}
 
           {assessment?.error_log && Object.keys(assessment.error_log).length > 0 && (
@@ -164,7 +178,7 @@ export default function CandidateDetailPage() {
             <RAGChatbot applicationId={applicationId} />
           ) : (
             <Card className="h-full flex items-center justify-center">
-              <p className="text-slate-400 text-sm">No application ID provided</p>
+              <p className="text-gray-400 text-sm">No application ID provided</p>
             </Card>
           )}
         </div>

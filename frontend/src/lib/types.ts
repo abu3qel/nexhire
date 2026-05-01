@@ -99,6 +99,23 @@ export interface PortfolioDetails {
   llm_summary: string;
 }
 
+export interface ModalityContribution {
+  score: number;
+  effective_weight_pct: number;
+  confidence: number;
+  contribution: number;
+}
+
+export interface AssessmentExplanation {
+  summary: string;
+  modality_contributions: Partial<Record<keyof ModalityWeights, ModalityContribution>>;
+  primary_driver: keyof ModalityWeights | null;
+  modalities_available: number;
+  confidence_note: string;
+  avg_confidence: number;
+  fusion_delta_vs_baseline: number;
+}
+
 export interface Assessment {
   id: string;
   application_id: string;
@@ -116,6 +133,8 @@ export interface Assessment {
   stackoverflow_details?: StackOverflowDetails;
   portfolio_details?: PortfolioDetails;
   weights_used?: ModalityWeights;
+  confidence_scores?: Partial<Record<keyof ModalityWeights, number>>;
+  explanation?: AssessmentExplanation;
   error_log?: Record<string, string>;
   completed_at?: string;
 }
@@ -134,6 +153,11 @@ export interface RankedCandidate {
   baseline_score?: number;
   assessment_status: AssessmentStatus;
   application_status: ApplicationStatus;
+  has_resume: boolean;
+  has_cover_letter: boolean;
+  has_github: boolean;
+  has_stackoverflow: boolean;
+  has_portfolio: boolean;
   rank?: number;
   baseline_rank?: number;
   rank_change?: number;
@@ -143,4 +167,5 @@ export interface RAGMessage {
   role: "user" | "assistant";
   content: string;
   sources?: string[];
+  retrieval_confidence?: number;
 }

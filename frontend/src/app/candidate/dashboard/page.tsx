@@ -1,10 +1,9 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Briefcase, Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Calendar, ArrowRight } from "lucide-react";
 import { applicationsApi } from "@/lib/api";
 import { Application } from "@/lib/types";
-import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,70 +25,71 @@ export default function CandidateDashboard() {
   const firstName = user?.full_name.split(" ")[0] || "there";
 
   const stats = [
-    { label: "Total Applied", value: applications.length, icon: Briefcase, color: "text-slate-900" },
-    { label: "Under Review", value: applications.filter(a => a.status === "under_review").length, icon: Clock, color: "text-blue-600" },
-    { label: "Shortlisted", value: applications.filter(a => a.status === "shortlisted").length, icon: CheckCircle2, color: "text-emerald-600" },
-    { label: "Rejected", value: applications.filter(a => a.status === "rejected").length, icon: XCircle, color: "text-red-600" },
+    { label: "Applied",        value: applications.length },
+    { label: "Under review",   value: applications.filter(a => a.status === "under_review").length },
+    { label: "Shortlisted",    value: applications.filter(a => a.status === "shortlisted").length },
+    { label: "Rejected",       value: applications.filter(a => a.status === "rejected").length },
   ];
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-xl font-bold text-slate-900">Welcome back, {firstName}</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Track your applications and discover new opportunities</p>
+        <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+          Welcome back, {firstName}
+        </h1>
+        <p className="text-gray-500 text-sm mt-0.5">Track your applications and find new roles</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {stats.map((s) => (
-          <Card key={s.label} className="py-4">
-            <div className={`text-2xl font-bold ${s.color} mb-1`}>{s.value}</div>
-            <div className="text-xs text-slate-500">{s.label}</div>
-          </Card>
+          <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="text-3xl font-bold text-gray-900 font-mono mb-1">{s.value}</div>
+            <div className="text-xs text-gray-500 font-medium">{s.label}</div>
+          </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-slate-900">My Applications</h2>
+        <h2 className="text-sm font-semibold text-gray-900">Recent applications</h2>
         <Link href="/candidate/jobs">
-          <Button size="sm"><Briefcase className="w-4 h-4" /> Browse Jobs</Button>
+          <Button size="sm">Browse jobs <ArrowRight className="w-3.5 h-3.5" /></Button>
         </Link>
       </div>
 
       {isLoading && (
         <div className="flex justify-center py-12">
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
       {applications.length === 0 && !isLoading && (
-        <Card className="text-center py-16">
-          <Briefcase className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 text-sm mb-4">No applications yet</p>
+        <div className="bg-white border border-gray-200 rounded-xl text-center py-16">
+          <p className="text-gray-500 text-sm mb-4">No applications yet</p>
           <Link href="/candidate/jobs">
-            <Button>Browse open positions</Button>
+            <Button>Browse open roles</Button>
           </Link>
-        </Card>
+        </div>
       )}
 
       {applications.length > 0 && (
-        <div className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           {applications.map((app, i) => {
             const cfg = statusConfig[app.status] || { variant: "gray" as const, label: app.status };
             return (
               <div
                 key={app.id}
-                className={`flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors ${
-                  i < applications.length - 1 ? "border-b border-slate-100" : ""
+                className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50/80 transition-colors ${
+                  i < applications.length - 1 ? "border-b border-gray-100" : ""
                 }`}
               >
-                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                  <Briefcase className="w-4 h-4 text-blue-600" />
-                </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-900">Job Application</div>
-                  <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                  <div className="text-sm font-medium text-gray-900 mb-0.5">Job Application</div>
+                  <div className="flex items-center gap-1.5 text-xs text-gray-400">
                     <Calendar className="w-3 h-3" />
                     Applied {new Date(app.submitted_at).toLocaleDateString()}
+                    {app.github_url && <span className="ml-2 text-emerald-600 font-medium">GitHub</span>}
+                    {app.portfolio_url && <span className="text-emerald-600 font-medium">Portfolio</span>}
                   </div>
                 </div>
                 <Badge variant={cfg.variant}>{cfg.label}</Badge>

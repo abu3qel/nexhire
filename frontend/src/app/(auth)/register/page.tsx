@@ -19,6 +19,9 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+const inputCls =
+  "w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition";
+
 export default function RegisterPage() {
   const router = useRouter();
   const { register: authRegister } = useAuth();
@@ -39,7 +42,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const user = await authRegister(data);
-      toast.success("Account created!");
+      toast.success("Account created");
       router.push(user.role === "recruiter" ? "/recruiter/dashboard" : "/candidate/jobs");
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Registration failed";
@@ -49,44 +52,66 @@ export default function RegisterPage() {
     }
   };
 
-  const inputCls = "w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition";
-
   return (
-    <div className="min-h-screen flex">
-      {/* Left branding panel */}
-      <div className="hidden lg:flex w-5/12 bg-[#1E293B] flex-col justify-between p-12">
-        <div className="text-white font-bold text-xl tracking-tight">NexHire</div>
+    <div className="min-h-screen flex bg-[#F5F6FA]">
+      {/* Left panel */}
+      <div className="hidden lg:flex w-[420px] flex-shrink-0 bg-[#0D1117] flex-col justify-between p-10">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
+            <span className="text-white text-sm font-black">N</span>
+          </div>
+          <span className="text-white font-bold tracking-tight">NexHire</span>
+        </Link>
+
         <div>
-          <h2 className="text-3xl font-bold text-white leading-snug mb-4">
+          <h2 className="text-3xl font-extrabold text-white leading-snug mb-4 tracking-tight">
             Join the future<br />of technical hiring.
           </h2>
-          <p className="text-slate-400 text-base leading-relaxed max-w-xs">
-            Recruiters discover exceptional engineers. Candidates get fairly assessed on what matters most.
+          <p className="text-white/45 text-sm leading-relaxed max-w-xs">
+            Recruiters surface exceptional engineers. Candidates get assessed on real signals, not just paper.
           </p>
+
+          <div className="mt-10 space-y-3">
+            {["AI-powered signal fusion", "Transparent score breakdowns", "Explainable rankings"].map(f => (
+              <div key={f} className="flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+                <span className="text-white/45 text-sm">{f}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="text-slate-600 text-xs">QMUL CS Final Year Project</p>
+
+        <p className="text-white/20 text-xs">QMUL CS Final Year Project</p>
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 bg-white flex flex-col justify-center items-center px-8">
+      <div className="flex-1 flex flex-col justify-center items-center px-8 py-12">
         <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">Create account</h1>
-          <p className="text-slate-500 text-sm mb-8">
+          {/* Mobile logo */}
+          <Link href="/" className="flex items-center gap-2.5 mb-8 lg:hidden">
+            <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center">
+              <span className="text-white text-xs font-black">N</span>
+            </div>
+            <span className="font-bold text-gray-900 tracking-tight">NexHire</span>
+          </Link>
+
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-1">Create account</h1>
+          <p className="text-gray-500 text-sm mb-8">
             Already registered?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">Sign in</Link>
+            <Link href="/login" className="text-brand-600 hover:text-brand-700 font-medium">Sign in</Link>
           </p>
 
           {/* Role toggle */}
-          <div className="flex rounded-lg bg-slate-100 p-1 mb-6 border border-slate-200">
+          <div className="flex rounded-lg bg-gray-100 p-1 mb-6 border border-gray-200">
             {(["candidate", "recruiter"] as const).map((r) => (
               <button
                 key={r}
                 type="button"
                 onClick={() => handleRoleChange(r)}
-                className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all capitalize ${
                   role === r
-                    ? "bg-white text-slate-900 shadow-sm border border-slate-200"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {r}
@@ -96,21 +121,21 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Full name</label>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Full name</label>
               <input {...register("full_name")} placeholder="Jane Smith" className={inputCls} />
-              {errors.full_name && <p className="text-red-600 text-xs mt-1">{errors.full_name.message}</p>}
+              {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name.message}</p>}
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email address</label>
-              <input {...register("email")} type="email" placeholder="you@example.com" className={inputCls} />
-              {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email.message}</p>}
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Email</label>
+              <input {...register("email")} type="email" placeholder="you@company.com" className={inputCls} />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Password</label>
-              <input {...register("password")} type="password" placeholder="Minimum 8 characters" className={inputCls} />
-              {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password.message}</p>}
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Password</label>
+              <input {...register("password")} type="password" placeholder="8 characters minimum" className={inputCls} />
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
 
             <AnimatePresence>
@@ -120,7 +145,7 @@ export default function RegisterPage() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                 >
-                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Company name</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Company name</label>
                   <input {...register("company_name")} placeholder="Acme Corp" className={inputCls} />
                 </motion.div>
               )}

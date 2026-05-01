@@ -21,6 +21,8 @@ class AssessmentOut(BaseModel):
     stackoverflow_details: Optional[Any] = None
     portfolio_details: Optional[Any] = None
     weights_used: Optional[Any] = None
+    confidence_scores: Optional[Any] = None
+    explanation: Optional[Any] = None
     error_log: Optional[Any] = None
     completed_at: Optional[datetime] = None
 
@@ -41,6 +43,11 @@ class RankedCandidate(BaseModel):
     baseline_score: Optional[float] = None
     assessment_status: str
     application_status: str
+    has_resume: bool = False
+    has_cover_letter: bool = False
+    has_github: bool = False
+    has_stackoverflow: bool = False
+    has_portfolio: bool = False
     rank: Optional[int] = None
     baseline_rank: Optional[int] = None
     rank_change: Optional[int] = None
@@ -55,3 +62,4 @@ class RAGChatRequest(BaseModel):
 class RAGChatResponse(BaseModel):
     answer: str
     sources: list[str]
+    retrieval_confidence: float = 0.0

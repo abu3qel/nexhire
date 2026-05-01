@@ -128,10 +128,9 @@ async def query_rag(
     application_id: str,
     message: str,
     conversation_history: list[dict],
-) -> tuple[str, list[str]]:
+) -> tuple[str, list[str], float]:
     query_embedding = await embed_text(message)
 
-    # pgvector cosine similarity search
     result = await db.execute(
         text("""
             SELECT chunk_text, chunk_source,
@@ -147,15 +146,18 @@ async def query_rag(
     rows = result.fetchall()
 
     if not rows:
-        return "No candidate data available for this application.", []
+        return "No candidate data available for this application.", [], 0.0
 
     context_parts = []
     sources = []
+    similarities = []
     for row in rows:
         context_parts.append(f"[{row.chunk_source}]: {row.chunk_text}")
         if row.chunk_source not in sources:
             sources.append(row.chunk_source)
+        similarities.append(float(row.similarity))
 
+    retrieval_confidence = sum(similarities) / len(similarities)
     context = "\n\n".join(context_parts)
 
     system_prompt = (
@@ -167,9 +169,9 @@ async def query_rag(
     )
 
     messages = []
-    for turn in conversation_history[-6:]:  # Keep last 6 turns for context
+    for turn in conversation_history[-6:]:
         messages.append({"role": turn["role"], "content": turn["content"]})
     messages.append({"role": "user", "content": message})
 
     answer = await call_llm_text(system_prompt, messages)
-    return answer, sources
+    return answer, sources, round(retrieval_confidence, 3)

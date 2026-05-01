@@ -37,7 +37,7 @@ export default function CandidateJobDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default function CandidateJobDetailPage() {
   if (!job) {
     return (
       <div className="text-center py-16">
-        <p className="text-slate-500 text-sm mb-4">Job not found</p>
+        <p className="text-gray-500 text-sm mb-4">Job not found</p>
         <Link href="/candidate/jobs"><Button variant="secondary">Back to jobs</Button></Link>
       </div>
     );
@@ -58,7 +58,7 @@ export default function CandidateJobDetailPage() {
         <Link href="/candidate/jobs">
           <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
         </Link>
-        <span className="text-sm text-slate-500">Back to jobs</span>
+        <span className="text-sm text-gray-500">Back to jobs</span>
       </div>
 
       {/* Header card */}
@@ -66,10 +66,10 @@ export default function CandidateJobDetailPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <h1 className="text-xl font-bold text-slate-900">{job.title}</h1>
+              <h1 className="text-xl font-bold text-gray-900">{job.title}</h1>
               <Badge variant="blue">{jobTypeLbl[job.job_type] || job.job_type}</Badge>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-500">
               <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{job.location}</span>
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
@@ -94,17 +94,17 @@ export default function CandidateJobDetailPage() {
 
       {/* Description */}
       <Card className="mb-5">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Job Description</h2>
-        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{job.description}</p>
+        <h2 className="text-sm font-semibold text-gray-900 mb-3">Job Description</h2>
+        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{job.description}</p>
       </Card>
 
       {/* Skills */}
       {job.required_skills.length > 0 && (
         <Card>
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Required Skills</h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">Required Skills</h2>
           <div className="flex flex-wrap gap-2">
             {job.required_skills.map(skill => (
-              <span key={skill} className="text-sm px-3 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+              <span key={skill} className="text-sm px-3 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-200">
                 {skill}
               </span>
             ))}

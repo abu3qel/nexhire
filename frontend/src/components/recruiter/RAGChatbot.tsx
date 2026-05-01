@@ -37,7 +37,12 @@ export function RAGChatbot({ applicationId }: Props) {
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
       const { data } = await ragApi.chat({ application_id: applicationId, message: text, conversation_history: history });
-      setMessages(prev => [...prev, { role: "assistant", content: data.answer, sources: data.sources }]);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: data.answer,
+        sources: data.sources,
+        retrieval_confidence: data.retrieval_confidence,
+      }]);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't retrieve an answer. Please try again.", sources: [] }]);
     } finally {
@@ -50,23 +55,23 @@ export function RAGChatbot({ applicationId }: Props) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100 flex-shrink-0">
-        <h3 className="font-semibold text-slate-900 text-sm">Ask about this candidate</h3>
-        <p className="text-xs text-slate-400 mt-0.5">Powered by RAG over candidate data</p>
+      <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="font-semibold text-gray-900 text-sm">Ask about this candidate</h3>
+        <p className="text-xs text-gray-400 mt-0.5">Powered by RAG over candidate data</p>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
           <div className="space-y-2 pt-1">
-            <p className="text-xs text-slate-400 text-center mb-3">Suggested questions</p>
+            <p className="text-xs text-gray-400 text-center mb-3">Suggested questions</p>
             {STARTER_QUESTIONS.map((q) => (
               <button
                 key={q}
                 onClick={() => send(q)}
-                className="w-full text-left text-xs px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-100 transition-colors"
+                className="w-full text-left text-xs px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-100 transition-colors"
               >
                 {q}
               </button>
@@ -85,19 +90,34 @@ export function RAGChatbot({ applicationId }: Props) {
               <div className={`max-w-[85%] flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
                 <div className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-sm"
-                    : "bg-slate-50 text-slate-800 border border-slate-200 rounded-bl-sm"
+                    ? "bg-brand-600 text-white rounded-br-sm"
+                    : "bg-gray-50 text-gray-800 border border-gray-200 rounded-bl-sm"
                 }`}>
                   {msg.content}
                 </div>
-                {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+                {msg.role === "assistant" && (
                   <div className="flex flex-wrap items-center gap-1 px-1">
-                    <span className="text-xs text-slate-400">Sources:</span>
-                    {msg.sources.map(s => (
-                      <span key={s} className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 select-none">
-                        {s.replace(/_/g, " ")}
+                    {msg.sources && msg.sources.length > 0 && (
+                      <>
+                        <span className="text-xs text-gray-400">Sources:</span>
+                        {msg.sources.map(s => (
+                          <span key={s} className="text-xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 border border-gray-200 select-none">
+                            {s.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </>
+                    )}
+                    {msg.retrieval_confidence != null && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium select-none ${
+                        msg.retrieval_confidence >= 0.7
+                          ? "bg-emerald-50 text-emerald-600"
+                          : msg.retrieval_confidence >= 0.4
+                          ? "bg-amber-50 text-amber-600"
+                          : "bg-red-50 text-red-500"
+                      }`}>
+                        {Math.round(msg.retrieval_confidence * 100)}% match
                       </span>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
@@ -107,12 +127,12 @@ export function RAGChatbot({ applicationId }: Props) {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl rounded-bl-sm px-4 py-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl rounded-bl-sm px-4 py-3">
               <div className="flex gap-1.5 items-center h-4">
                 {[0, 1, 2].map(i => (
                   <motion.div
                     key={i}
-                    className="w-1.5 h-1.5 rounded-full bg-slate-400"
+                    className="w-1.5 h-1.5 rounded-full bg-gray-400"
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.15 }}
                   />
@@ -125,7 +145,7 @@ export function RAGChatbot({ applicationId }: Props) {
       </div>
 
       {/* Input */}
-      <div className="px-4 py-4 border-t border-slate-100 flex-shrink-0">
+      <div className="px-4 py-4 border-t border-gray-100 flex-shrink-0">
         <div className="flex gap-2">
           <input
             value={input}
@@ -133,12 +153,12 @@ export function RAGChatbot({ applicationId }: Props) {
             onKeyDown={handleKey}
             placeholder="Ask anything about this candidate..."
             disabled={loading}
-            className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50"
+            className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition disabled:opacity-50"
           />
           <button
             onClick={() => send(input)}
             disabled={!input.trim() || loading}
-            className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
+            className="w-10 h-10 rounded-lg bg-brand-600 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-700 transition-colors flex-shrink-0"
           >
             <Send className="w-4 h-4 text-white" />
           </button>

@@ -44,30 +44,30 @@ export default function CandidateJobsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900">Browse Jobs</h1>
-        <p className="text-slate-500 text-sm mt-0.5">{jobs.length} open position{jobs.length !== 1 ? "s" : ""}</p>
+        <h1 className="text-xl font-bold text-gray-900">Browse Jobs</h1>
+        <p className="text-gray-500 text-sm mt-0.5">{jobs.length} open position{jobs.length !== 1 ? "s" : ""}</p>
       </div>
 
       {/* Filters */}
       <div className="flex gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search jobs..."
-            className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {JOB_TYPES.map(t => (
             <button
               key={t.value}
               onClick={() => setTypeFilter(t.value)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 typeFilter === t.value
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 shadow-sm"
+                  ? "bg-brand-600 text-white"
+                  : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
               }`}
             >
               {t.label}
@@ -78,12 +78,12 @@ export default function CandidateJobsPage() {
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
       {!isLoading && filtered.length === 0 && (
-        <div className="text-center py-16 text-slate-400 text-sm">
+        <div className="text-center py-16 text-gray-400 text-sm">
           {search || typeFilter ? "No jobs match your filters" : "No open positions at the moment"}
         </div>
       )}

@@ -17,12 +17,12 @@ async def chat(
     current_user: User = Depends(require_recruiter),
 ):
     try:
-        answer, sources = await query_rag(
+        answer, sources, retrieval_confidence = await query_rag(
             db=db,
             application_id=str(body.application_id),
             message=body.message,
             conversation_history=body.conversation_history,
         )
-        return RAGChatResponse(answer=answer, sources=sources)
+        return RAGChatResponse(answer=answer, sources=sources, retrieval_confidence=retrieval_confidence)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -66,16 +66,14 @@ async def get_ranked_candidates(
             "baseline_score": a.baseline_score if a else None,
             "assessment_status": a.status if a else "pending",
             "application_status": app.status,
+            "has_resume": bool(app.resume_path),
+            "has_cover_letter": bool(app.cover_letter_path),
+            "has_github": bool(app.github_url),
+            "has_stackoverflow": bool(app.stackoverflow_url),
+            "has_portfolio": bool(app.portfolio_url),
         })
 
-    # Min-max normalise composite scores across the pool
     completed = [c for c in candidates if c["composite_score"] is not None]
-    if len(completed) > 1:
-        scores = [c["composite_score"] for c in completed]
-        mn, mx = min(scores), max(scores)
-        if mx > mn:
-            for c in completed:
-                c["composite_score"] = (c["composite_score"] - mn) / (mx - mn)
 
     # Sort: completed by composite desc, then non-completed at bottom
     completed_sorted = sorted(completed, key=lambda c: c["composite_score"] or 0, reverse=True)

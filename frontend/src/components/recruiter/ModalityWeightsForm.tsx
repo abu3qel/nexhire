@@ -49,7 +49,7 @@ export function ModalityWeightsForm({ jobId, currentWeights, onClose }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-base font-semibold text-slate-900">Modality Weights</h3>
+        <h3 className="text-base font-semibold text-gray-900">Modality Weights</h3>
         <span className={`text-xs font-semibold px-2 py-1 rounded-md ${valid ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
           Total: {(total * 100).toFixed(0)}%
         </span>
@@ -59,14 +59,14 @@ export function ModalityWeightsForm({ jobId, currentWeights, onClose }: Props) {
         {KEYS.map(({ key, label }) => (
           <div key={key}>
             <div className="flex justify-between mb-1.5">
-              <label className="text-sm font-medium text-slate-700">{label}</label>
-              <span className="text-sm font-semibold text-blue-600">{Math.round(weights[key] * 100)}%</span>
+              <label className="text-sm font-medium text-gray-700">{label}</label>
+              <span className="text-sm font-semibold text-brand-600">{Math.round(weights[key] * 100)}%</span>
             </div>
             <input
               type="range" min={0} max={1} step={0.05}
               value={weights[key]}
               onChange={e => set(key, parseFloat(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-brand-600"
             />
           </div>
         ))}

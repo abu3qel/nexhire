@@ -34,6 +34,8 @@ class Assessment(Base):
     portfolio_details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     weights_used: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    confidence_scores: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    explanation: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error_log: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

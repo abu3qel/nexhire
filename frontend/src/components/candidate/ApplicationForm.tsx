@@ -21,7 +21,7 @@ function FileDropZone({ label, accept, file, onFile, required }: {
 
   return (
     <div>
-      <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+      <label className="text-sm font-medium text-gray-700 mb-1.5 block">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div
@@ -33,20 +33,20 @@ function FileDropZone({ label, accept, file, onFile, required }: {
           const f = e.dataTransfer.files[0]; if (f) onFile(f);
         }}
         className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${
-          dragging ? "border-blue-400 bg-blue-50" :
-          file ? "border-blue-300 bg-blue-50" :
-          "border-slate-200 hover:border-slate-300 bg-slate-50"
+          dragging ? "border-brand-400 bg-brand-50" :
+          file ? "border-brand-300 bg-brand-50" :
+          "border-gray-200 hover:border-gray-300 bg-gray-50"
         }`}
       >
         {file ? (
-          <div className="flex items-center justify-center gap-2 text-sm text-blue-600 font-medium">
+          <div className="flex items-center justify-center gap-2 text-sm text-brand-600 font-medium">
             <FileText className="w-4 h-4" />{file.name}
           </div>
         ) : (
           <div>
-            <Upload className="w-7 h-7 text-slate-400 mx-auto mb-1.5" />
-            <p className="text-sm text-slate-500">Drop file here or click to upload</p>
-            <p className="text-xs text-slate-400 mt-0.5">PDF or DOCX</p>
+            <Upload className="w-7 h-7 text-gray-400 mx-auto mb-1.5" />
+            <p className="text-sm text-gray-500">Drop file here or click to upload</p>
+            <p className="text-xs text-gray-400 mt-0.5">PDF or DOCX</p>
           </div>
         )}
         <input ref={inputRef} type="file" accept={accept} className="hidden"
@@ -56,7 +56,7 @@ function FileDropZone({ label, accept, file, onFile, required }: {
   );
 }
 
-const inputCls = "w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition";
+const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white transition";
 
 export function ApplicationForm({ job, onClose }: Props) {
   const qc = useQueryClient();
@@ -109,14 +109,14 @@ export function ApplicationForm({ job, onClose }: Props) {
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 sticky top-0 bg-white z-10">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
             <div>
-              <h2 className="font-bold text-slate-900 text-base">Apply for Position</h2>
-              <p className="text-xs text-slate-500 mt-0.5">{job.title}</p>
+              <h2 className="font-bold text-gray-900 text-base">Apply for Position</h2>
+              <p className="text-xs text-gray-500 mt-0.5">{job.title}</p>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -127,24 +127,24 @@ export function ApplicationForm({ job, onClose }: Props) {
             <FileDropZone label="Cover Letter (optional)" accept=".pdf,.docx" file={coverLetter} onFile={setCoverLetter} />
 
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 flex items-center gap-2 block">
-                <Github className="w-4 h-4 text-slate-500" /> GitHub URL <span className="text-slate-400 font-normal">(optional)</span>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2 block">
+                <Github className="w-4 h-4 text-gray-500" /> GitHub URL <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input value={githubUrl} onChange={e => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/username" className={inputCls} />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">
-                Stack Overflow URL <span className="text-slate-400 font-normal">(optional)</span>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Stack Overflow URL <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input value={soUrl} onChange={e => setSoUrl(e.target.value)}
                 placeholder="https://stackoverflow.com/users/123456" className={inputCls} />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 flex items-center gap-2 block">
-                <Globe className="w-4 h-4 text-slate-500" /> Portfolio URL <span className="text-slate-400 font-normal">(optional)</span>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2 block">
+                <Globe className="w-4 h-4 text-gray-500" /> Portfolio URL <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input value={portfolioUrl} onChange={e => setPortfolioUrl(e.target.value)}
                 placeholder="https://yourportfolio.com" className={inputCls} />
