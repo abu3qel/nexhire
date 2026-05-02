@@ -1,22 +1,32 @@
 import json
-import re
+import logging
 from typing import Optional
 from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 from app.services.llm_utils import call_llm_json
 
-# Expanded URL patterns for project/work pages
-PROJECT_PATTERNS = re.compile(
-    r"/(project|work|case-study|portfolio|showcase|apps?|built|making|demo|product|experiment)/",
-    re.I,
-)
+logger = logging.getLogger(__name__)
 
-# Additional patterns for top-level sections worth scraping
-SECTION_PATTERNS = re.compile(
-    r"/(about|skills?|experience|labs?|research|open-source)/",
-    re.I,
-)
+_SKIP_EXTENSIONS = {
+    ".xml", ".json", ".pdf", ".png", ".jpg", ".jpeg", ".gif",
+    ".svg", ".ico", ".css", ".js", ".woff", ".woff2", ".ttf",
+}
+
+_SKIP_SUBSTRINGS = {
+    "#", "mailto:", "tel:", "/rss", "/feed", "/sitemap",
+    "/tag/", "/category/", "/categories/", "/tags/", "/page/",
+    "/wp-admin", "/cdn-cgi",
+}
+
+
+def _is_content_url(url: str) -> bool:
+    lower = url.lower()
+    if any(lower.endswith(ext) for ext in _SKIP_EXTENSIONS):
+        return False
+    if any(fragment in lower for fragment in _SKIP_SUBSTRINGS):
+        return False
+    return True
 
 
 async def analyse_portfolio(portfolio_url: Optional[str], job_description: str) -> Optional[dict]:
@@ -31,10 +41,7 @@ async def analyse_portfolio(portfolio_url: Optional[str], job_description: str) 
     all_text = main_text
     pages_scraped = 1
 
-    # Prioritise project-pattern links, then section-pattern links
-    project_links = [l for l in extra_links if PROJECT_PATTERNS.search(l)]
-    section_links = [l for l in extra_links if SECTION_PATTERNS.search(l) and l not in project_links]
-    ordered_links = project_links + section_links
+    ordered_links = [l for l in extra_links if _is_content_url(l)]
 
     for link in ordered_links:
         if pages_scraped >= 5:
@@ -90,8 +97,9 @@ async def analyse_portfolio(portfolio_url: Optional[str], job_description: str) 
 async def _scrape_page(url: str) -> tuple[str, list[str], str]:
     """
     Returns (text, internal_links, og_meta_string).
-    Tries plain httpx first; falls back to a JS-rendering hint via User-Agent spoofing
-    if the page returns very little text (likely client-side rendered).
+    Stage 1: plain httpx fetch — fast and sufficient for SSR/static sites.
+    Stage 2: Playwright headless Chromium fallback for JS-rendered SPAs when
+             httpx returns fewer than 10 meaningful lines of content.
     """
     headers = {
         "User-Agent": (
@@ -107,18 +115,40 @@ async def _scrape_page(url: str) -> tuple[str, list[str], str]:
         resp = await client.get(url, headers=headers)
         resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    httpx_result = _parse_html(resp.text, url)
+    meaningful_lines = len([l for l in httpx_result[0].splitlines() if len(l.strip()) > 30])
+    if meaningful_lines >= 10:
+        return httpx_result
+
+    # Stage 2 — JS-rendered SPA: use Playwright to get fully hydrated HTML
+    logger.info("Portfolio httpx returned %d meaningful lines for %s — trying Playwright", meaningful_lines, url)
+    try:
+        from playwright.async_api import async_playwright
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            await page.goto(url, timeout=20000, wait_until="networkidle")
+            await page.wait_for_timeout(2000)
+            html = await page.content()
+            await browser.close()
+        pw_result = _parse_html(html, url)
+        logger.info("Playwright succeeded for %s", url)
+        return pw_result
+    except Exception as exc:
+        logger.warning("Playwright fallback failed for %s: %s", url, exc)
+        return httpx_result
+
+
+def _parse_html(html: str, url: str) -> tuple[str, list[str], str]:
+    """Parse raw HTML into (text, internal_links, og_meta_string)."""
+    soup = BeautifulSoup(html, "html.parser")
 
     # Extract OpenGraph / JSON-LD structured data before removing tags
     og_meta = _extract_structured_meta(soup)
 
-    # Remove boilerplate tags
-    for tag in soup(["nav", "footer", "script", "style", "noscript", "header", "aside"]):
-        tag.decompose()
-
-    text = soup.get_text(separator="\n", strip=True)
-
-    # Collect internal links
+    # Collect internal links before decomposing nav/footer/header/aside so
+    # that navigation links (which often point to project and section pages)
+    # are not lost.
     base = urlparse(url)
     links: list[str] = []
     for a in soup.find_all("a", href=True):
@@ -130,6 +160,12 @@ async def _scrape_page(url: str) -> tuple[str, list[str], str]:
         elif href.startswith("/"):
             links.append(urljoin(url, href))
         # Ignore fragment-only and mailto: links
+
+    # Remove boilerplate tags before text extraction
+    for tag in soup(["nav", "footer", "script", "style", "noscript", "header", "aside"]):
+        tag.decompose()
+
+    text = soup.get_text(separator="\n", strip=True)
 
     return text, list(set(links)), og_meta
 

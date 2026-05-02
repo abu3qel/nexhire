@@ -14,16 +14,25 @@ interface Props {
   mode?: "composite" | "baseline";
 }
 
-function ScoreCell({ value }: { value?: number }) {
-  if (value == null) return <span className="text-gray-300 text-xs">—</span>;
-  const pct = Math.round(value * 100);
-  const color = value >= 0.7 ? "text-emerald-600" : value >= 0.4 ? "text-amber-600" : "text-red-600";
-  return (
-    <div className="min-w-[56px]">
-      <div className={`text-xs font-semibold ${color} mb-1`}>{pct}%</div>
-      <ScoreBar value={value} showLabel={false} size="sm" />
-    </div>
-  );
+function ScoreCell({ value, submitted, assessmentStatus }: {
+  value?: number | null;
+  submitted?: boolean;
+  assessmentStatus?: string;
+}) {
+  if (value != null) {
+    const pct = Math.round(value * 100);
+    const color = value >= 0.7 ? "text-emerald-600" : value >= 0.4 ? "text-amber-600" : "text-red-600";
+    return (
+      <div className="min-w-[56px]">
+        <div className={`text-xs font-semibold ${color} mb-1`}>{pct}%</div>
+        <ScoreBar value={value} showLabel={false} size="sm" />
+      </div>
+    );
+  }
+  if (submitted && assessmentStatus === "completed") {
+    return <span className="text-xs font-medium text-red-400">Failed</span>;
+  }
+  return <span className="text-gray-300 text-xs">—</span>;
 }
 
 function AssessmentBadge({ status }: { status: string }) {
@@ -96,11 +105,11 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
                     <div className="font-medium text-gray-900 text-sm">{c.candidate_name}</div>
                     <div className="text-xs text-gray-400">{c.candidate_email}</div>
                   </td>
-                  <td className="py-3 px-4 hidden sm:table-cell"><ScoreCell value={c.resume_score} /></td>
-                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.cover_letter_score} /></td>
-                  <td className="py-3 px-4 hidden md:table-cell"><ScoreCell value={c.github_score} /></td>
-                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.stackoverflow_score} /></td>
-                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.portfolio_score} /></td>
+                  <td className="py-3 px-4 hidden sm:table-cell"><ScoreCell value={c.resume_score} submitted={c.has_resume} assessmentStatus={c.assessment_status} /></td>
+                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.cover_letter_score} submitted={c.has_cover_letter} assessmentStatus={c.assessment_status} /></td>
+                  <td className="py-3 px-4 hidden md:table-cell"><ScoreCell value={c.github_score} submitted={c.has_github} assessmentStatus={c.assessment_status} /></td>
+                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.stackoverflow_score} submitted={c.has_stackoverflow} assessmentStatus={c.assessment_status} /></td>
+                  <td className="py-3 px-4 hidden lg:table-cell"><ScoreCell value={c.portfolio_score} submitted={c.has_portfolio} assessmentStatus={c.assessment_status} /></td>
                   <td className="py-3 px-4">
                     {c.composite_score != null ? (
                       <span className="text-base font-bold font-mono text-brand-600">
@@ -155,6 +164,8 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
                                     <div className="w-2.5 h-2.5 border-2 border-brand-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                                     <span className="text-xs text-brand-500">Processing</span>
                                   </div>
+                                ) : submitted && c.assessment_status === "completed" ? (
+                                  <span className="text-xs font-medium text-red-400">Failed</span>
                                 ) : (
                                   <span className="text-xs text-gray-300">{submitted ? "Pending" : "Not provided"}</span>
                                 )}

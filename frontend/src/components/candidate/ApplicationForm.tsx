@@ -57,6 +57,37 @@ function FileDropZone({ label, accept, file, onFile, required }: {
 }
 
 const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white transition";
+const inputErrCls = "w-full border border-red-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white transition";
+
+function sanitizeUrl(val: string): string {
+  const trimmed = val.trim();
+  if (!trimmed) return trimmed;
+  if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
+  return trimmed;
+}
+
+function validateGithubUrl(val: string): string {
+  if (!val) return "";
+  return /^https:\/\/github\.com\/[^/?#]+\/?$/.test(val)
+    ? ""
+    : "Must be a GitHub profile URL — e.g. https://github.com/username";
+}
+
+function validateSoUrl(val: string): string {
+  if (!val) return "";
+  return /^https:\/\/stackoverflow\.com\/users\/[^/?#]/.test(val)
+    ? ""
+    : "Must be a Stack Overflow profile URL — e.g. https://stackoverflow.com/users/123456";
+}
+
+function validatePortfolioUrl(val: string): string {
+  if (!val) return "";
+  try {
+    return new URL(val).protocol === "https:" ? "" : "Must start with https://";
+  } catch {
+    return "Must be a valid URL — e.g. https://yoursite.com";
+  }
+}
 
 export function ApplicationForm({ job, onClose }: Props) {
   const qc = useQueryClient();
@@ -66,16 +97,41 @@ export function ApplicationForm({ job, onClose }: Props) {
   const [soUrl, setSoUrl] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [urlErrors, setUrlErrors] = useState({ github: "", so: "", portfolio: "" });
+
+  const handleBlur = (field: "github" | "so" | "portfolio", val: string) => {
+    const sanitized = sanitizeUrl(val);
+    const err =
+      field === "github" ? validateGithubUrl(sanitized) :
+      field === "so" ? validateSoUrl(sanitized) :
+      validatePortfolioUrl(sanitized);
+    setUrlErrors(prev => ({ ...prev, [field]: err }));
+  };
 
   const submit = async () => {
     if (!resume) { toast.error("Resume is required"); return; }
+
+    const finalGithub = sanitizeUrl(githubUrl);
+    const finalSo = sanitizeUrl(soUrl);
+    const finalPortfolio = sanitizeUrl(portfolioUrl);
+
+    const errors = {
+      github: validateGithubUrl(finalGithub),
+      so: validateSoUrl(finalSo),
+      portfolio: validatePortfolioUrl(finalPortfolio),
+    };
+    if (errors.github || errors.so || errors.portfolio) {
+      setUrlErrors(errors);
+      return;
+    }
+
     const fd = new FormData();
     fd.append("job_id", job.id);
     fd.append("resume", resume);
     if (coverLetter) fd.append("cover_letter", coverLetter);
-    if (githubUrl) fd.append("github_url", githubUrl);
-    if (soUrl) fd.append("stackoverflow_url", soUrl);
-    if (portfolioUrl) fd.append("portfolio_url", portfolioUrl);
+    if (finalGithub) fd.append("github_url", finalGithub);
+    if (finalSo) fd.append("stackoverflow_url", finalSo);
+    if (finalPortfolio) fd.append("portfolio_url", finalPortfolio);
 
     setLoading(true);
     try {
@@ -130,24 +186,42 @@ export function ApplicationForm({ job, onClose }: Props) {
               <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2 block">
                 <Github className="w-4 h-4 text-gray-500" /> GitHub URL <span className="text-gray-400 font-normal">(optional)</span>
               </label>
-              <input value={githubUrl} onChange={e => setGithubUrl(e.target.value)}
-                placeholder="https://github.com/username" className={inputCls} />
+              <input
+                value={githubUrl}
+                onChange={e => { setGithubUrl(e.target.value); setUrlErrors(prev => ({ ...prev, github: "" })); }}
+                onBlur={() => handleBlur("github", githubUrl)}
+                placeholder="https://github.com/username"
+                className={urlErrors.github ? inputErrCls : inputCls}
+              />
+              {urlErrors.github && <p className="text-red-500 text-xs mt-1">{urlErrors.github}</p>}
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                 Stack Overflow URL <span className="text-gray-400 font-normal">(optional)</span>
               </label>
-              <input value={soUrl} onChange={e => setSoUrl(e.target.value)}
-                placeholder="https://stackoverflow.com/users/123456" className={inputCls} />
+              <input
+                value={soUrl}
+                onChange={e => { setSoUrl(e.target.value); setUrlErrors(prev => ({ ...prev, so: "" })); }}
+                onBlur={() => handleBlur("so", soUrl)}
+                placeholder="https://stackoverflow.com/users/123456"
+                className={urlErrors.so ? inputErrCls : inputCls}
+              />
+              {urlErrors.so && <p className="text-red-500 text-xs mt-1">{urlErrors.so}</p>}
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2 block">
                 <Globe className="w-4 h-4 text-gray-500" /> Portfolio URL <span className="text-gray-400 font-normal">(optional)</span>
               </label>
-              <input value={portfolioUrl} onChange={e => setPortfolioUrl(e.target.value)}
-                placeholder="https://yourportfolio.com" className={inputCls} />
+              <input
+                value={portfolioUrl}
+                onChange={e => { setPortfolioUrl(e.target.value); setUrlErrors(prev => ({ ...prev, portfolio: "" })); }}
+                onBlur={() => handleBlur("portfolio", portfolioUrl)}
+                placeholder="https://yourportfolio.com"
+                className={urlErrors.portfolio ? inputErrCls : inputCls}
+              />
+              {urlErrors.portfolio && <p className="text-red-500 text-xs mt-1">{urlErrors.portfolio}</p>}
             </div>
 
             <div className="pt-2 flex gap-3">

@@ -20,6 +20,28 @@ from app.services.rag_service import ingest_candidate_chunks
 
 
 async def run_pipeline(application_id: str) -> None:
+    try:
+        await _run_pipeline(application_id)
+    except Exception as exc:
+        # Top-level safety net — open a fresh session to mark the assessment
+        # as failed so it never stays permanently stuck in pending/processing.
+        try:
+            async with AsyncSessionLocal() as db:
+                res = await db.execute(
+                    select(Assessment)
+                    .join(Application, Assessment.application_id == Application.id)
+                    .where(Application.id == application_id)
+                )
+                assessment = res.scalar_one_or_none()
+                if assessment and assessment.status not in ("completed", "failed"):
+                    assessment.status = "failed"
+                    assessment.error_log = {"pipeline": f"Unhandled exception: {str(exc)}"}
+                    await db.commit()
+        except Exception:
+            pass
+
+
+async def _run_pipeline(application_id: str) -> None:
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Application)
@@ -52,6 +74,8 @@ async def run_pipeline(application_id: str) -> None:
         stackoverflow_result = None
         portfolio_result = None
 
+        # Each modality is individually guarded — a failure sets score to None
+        # and logs the error, then the pipeline continues with remaining modalities.
         try:
             resume_result = await analyse_resume(application.raw_resume_text, job.description)
         except Exception as e:
@@ -117,7 +141,7 @@ async def run_pipeline(application_id: str) -> None:
             assessment.explanation = explanation
             assessment.error_log = error_log if error_log else None
             assessment.status = "completed"
-            assessment.completed_at = datetime.now(timezone.utc)
+            assessment.completed_at=datetime.now(timezone.utc).replace(tzinfo=None)
 
             await db.commit()
 

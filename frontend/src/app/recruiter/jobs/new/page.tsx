@@ -231,9 +231,9 @@ export default function NewJobPage() {
             Previous
           </Button>
           {step < STEPS.length - 1 ? (
-            <Button type="button" onClick={() => setStep(s => s + 1)}>Next</Button>
+            <Button key="next" type="button" onClick={() => setStep(s => s + 1)}>Next</Button>
           ) : (
-            <Button type="submit" loading={loading}>Create Job Posting</Button>
+            <Button key="submit" type="submit" loading={loading}>Create Job Posting</Button>
           )}
         </div>
       </form>

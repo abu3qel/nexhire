@@ -118,6 +118,8 @@ export function ScoreBreakdownCard({ assessment, application, assessmentStatus }
               </div>
             ) : wasSubmitted === false ? (
               <div className="text-sm text-gray-400">Not submitted</div>
+            ) : wasSubmitted && assessmentStatus === "completed" ? (
+              <div className="text-sm font-medium text-red-500">Analysis failed</div>
             ) : (
               <div className="text-sm text-gray-400">Not provided</div>
             )}

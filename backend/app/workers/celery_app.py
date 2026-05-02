@@ -26,8 +26,18 @@ celery_app.conf.update(
 @celery_app.task(name="run_assessment", bind=True, max_retries=2)
 def run_assessment(self, application_id: str) -> dict:
     from app.services.assessment_pipeline import run_pipeline
+
+    async def _run():
+        # Dispose the engine's connection pool before entering the new event
+        # loop so asyncpg connections from any previous asyncio.run() call
+        # are not reused — they are bound to the old closed loop and cause
+        # "Future attached to a different loop" errors.
+        from app.database import engine
+        await engine.dispose()
+        await run_pipeline(application_id)
+
     try:
-        asyncio.run(run_pipeline(application_id))
+        asyncio.run(_run())
         return {"status": "completed", "application_id": application_id}
     except Exception as exc:
         raise self.retry(exc=exc, countdown=30)

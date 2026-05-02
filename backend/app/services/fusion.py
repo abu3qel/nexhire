@@ -107,10 +107,9 @@ def build_explanation(
             "contribution": round((w / total_w) * s, 3),
         }
 
-    primary_driver = (
-        max(contributions, key=lambda m: contributions[m]["contribution"])
-        if contributions else None
-    )
+    ranked = sorted(contributions, key=lambda m: contributions[m]["contribution"], reverse=True)
+    primary_driver = ranked[0] if ranked else None
+    secondary_driver = ranked[1] if len(ranked) > 1 else None
 
     avg_conf = sum(confidence_scores.values()) / len(confidence_scores) if confidence_scores else 1.0
     if avg_conf >= 0.7:
@@ -122,25 +121,47 @@ def build_explanation(
 
     delta = composite - baseline
 
+    # Find modalities where high weight was undermined by low confidence
+    low_conf_warnings = [
+        m for m, c in contributions.items()
+        if c["effective_weight_pct"] >= 15 and confidence_scores.get(m, 1.0) < 0.4
+    ]
+
     if primary_driver:
         driver_score = round(contributions[primary_driver]["score"] * 100)
         driver_label = primary_driver.replace("_", " ").title()
-        summary = (
-            f"Composite score of {round(composite * 100)} driven primarily by "
-            f"{driver_label} ({driver_score}/100). "
-        )
+        parts = [
+            f"Composite score of {round(composite * 100)}/100, "
+            f"led by {driver_label} ({driver_score}/100, "
+            f"{contributions[primary_driver]['effective_weight_pct']:.0f}% effective weight)"
+        ]
+
+        if secondary_driver:
+            sec_score = round(contributions[secondary_driver]["score"] * 100)
+            sec_label = secondary_driver.replace("_", " ").title()
+            parts.append(
+                f"with {sec_label} as second contributor ({sec_score}/100)"
+            )
+
         if delta > 0.04:
-            summary += (
-                f"Multi-modal fusion lifted this candidate "
-                f"{round(delta * 100)} points above the resume-only baseline."
+            parts.append(
+                f"multi-modal signals lifted this candidate "
+                f"{round(delta * 100)} pts above the resume-only baseline"
             )
         elif delta < -0.04:
-            summary += (
-                f"Additional signals lowered this candidate "
-                f"{round(-delta * 100)} points below the resume-only baseline."
+            parts.append(
+                f"additional signals pulled {round(-delta * 100)} pts below "
+                f"the resume-only baseline"
             )
-        else:
-            summary += "Composite score closely matches the resume-only baseline."
+
+        if low_conf_warnings:
+            labels = " and ".join(m.replace("_", " ").title() for m in low_conf_warnings)
+            parts.append(
+                f"note: {labels} had low confidence due to limited data, "
+                f"reducing its influence on the final score"
+            )
+
+        summary = "; ".join(parts) + "."
     else:
         summary = "Insufficient data to compute a composite score."
 

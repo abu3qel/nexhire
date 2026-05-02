@@ -59,6 +59,12 @@ pip install -r requirements.txt
 uv pip install -r requirements.txt
 ```
 
+Install the Playwright browser used for JS-rendered portfolio scraping:
+
+```bash
+playwright install chromium
+```
+
 ### 5. Run database migrations
 
 ```bash
