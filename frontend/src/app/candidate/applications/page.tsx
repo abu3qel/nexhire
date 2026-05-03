@@ -1,7 +1,9 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Briefcase, Calendar } from "lucide-react";
+import { Briefcase, Calendar, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { applicationsApi } from "@/lib/api";
 import { Application } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
@@ -21,10 +23,27 @@ const statusLabel: Record<string, string> = {
 };
 
 export default function MyApplicationsPage() {
+  const qc = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const { data: apps = [], isLoading } = useQuery<Application[]>({
     queryKey: ["my-applications"],
     queryFn: async () => { const { data } = await applicationsApi.myApplications(); return data; },
   });
+
+  const handleDelete = async (app: Application) => {
+    if (!confirm("Withdraw this application? This cannot be undone.")) return;
+    setDeletingId(app.id);
+    try {
+      await applicationsApi.delete(app.id);
+      toast.success("Application withdrawn");
+      qc.invalidateQueries({ queryKey: ["my-applications"] });
+    } catch {
+      toast.error("Failed to withdraw application");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div>
@@ -80,6 +99,14 @@ export default function MyApplicationsPage() {
               <Badge variant={statusConfig[app.status] || "gray"}>
                 {statusLabel[app.status] || app.status}
               </Badge>
+              <button
+                onClick={() => handleDelete(app)}
+                disabled={deletingId === app.id}
+                className="p-1.5 rounded-lg border border-gray-200 hover:border-red-300 hover:text-red-500 text-gray-400 transition-colors disabled:opacity-40 flex-shrink-0"
+                title="Withdraw application"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           ))}
         </div>

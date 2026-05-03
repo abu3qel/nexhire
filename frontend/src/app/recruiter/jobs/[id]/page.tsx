@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Settings, MapPin, ChevronDown, ChevronUp, Pencil, XCircle } from "lucide-react";
+import { ArrowLeft, Settings, MapPin, ChevronDown, ChevronUp, Pencil, XCircle, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { jobsApi } from "@/lib/api";
@@ -27,6 +28,8 @@ export default function JobDetailPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   const { data: job, isLoading: jobLoading } = useQuery<Job>({
     queryKey: ["job", id],
@@ -37,7 +40,7 @@ export default function JobDetailPage() {
     if (!job || !confirm(`Close "${job.title}"? Candidates will no longer be able to apply.`)) return;
     setClosing(true);
     try {
-      await jobsApi.delete(id);
+      await jobsApi.update(id, { status: "closed" });
       toast.success("Job closed");
       qc.invalidateQueries({ queryKey: ["job", id] });
       qc.invalidateQueries({ queryKey: ["recruiter-jobs"] });
@@ -45,6 +48,20 @@ export default function JobDetailPage() {
       toast.error("Failed to close job");
     } finally {
       setClosing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!job || !confirm(`Permanently delete "${job.title}"? This will remove all applications and cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await jobsApi.delete(id);
+      toast.success("Job deleted");
+      qc.invalidateQueries({ queryKey: ["recruiter-jobs"] });
+      router.push("/recruiter/jobs");
+    } catch {
+      toast.error("Failed to delete job");
+      setDeleting(false);
     }
   };
 
@@ -83,17 +100,24 @@ export default function JobDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setShowWeights(!showWeights)}>
-            <Settings className="w-4 h-4" /> Weights
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>
-            <Pencil className="w-4 h-4" /> Edit
-          </Button>
           {job.status !== "closed" && (
+            <Button variant="secondary" size="sm" onClick={() => setShowWeights(!showWeights)}>
+              <Settings className="w-4 h-4" /> Weights
+            </Button>
+          )}
+          {job.status !== "closed" && (
+            <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>
+              <Pencil className="w-4 h-4" /> Edit
+            </Button>
+          )}
+          {job.status === "open" && (
             <Button variant="secondary" size="sm" onClick={handleClose} loading={closing}>
               <XCircle className="w-4 h-4" /> Close
             </Button>
           )}
+          <Button variant="secondary" size="sm" onClick={handleDelete} loading={deleting}>
+            <Trash2 className="w-4 h-4" /> Delete
+          </Button>
         </div>
       </div>
 

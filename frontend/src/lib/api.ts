@@ -59,6 +59,7 @@ export const applicationsApi = {
   get: (id: string) => api.get(`/applications/${id}`),
   updateStatus: (id: string, status: string) =>
     api.patch(`/applications/${id}/status?status=${status}`),
+  delete: (id: string) => api.delete(`/applications/${id}`),
 };
 
 // Assessments

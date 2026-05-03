@@ -45,7 +45,7 @@ export default function NewJobPage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, getValues, trigger, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { status: "open", job_type: "full_time", ...DEFAULT_WEIGHTS },
   });
@@ -231,7 +231,26 @@ export default function NewJobPage() {
             Previous
           </Button>
           {step < STEPS.length - 1 ? (
-            <Button key="next" type="button" onClick={() => setStep(s => s + 1)}>Next</Button>
+            <Button
+              key="next"
+              type="button"
+              onClick={async () => {
+                const stepFields: Record<number, Array<keyof FormData>> = {
+                  0: ["title", "location", "job_type", "status"],
+                  1: ["description"],
+                };
+                if (step in stepFields) {
+                  const valid = await trigger(stepFields[step]);
+                  if (!valid) return;
+                } else if (step === 2 && !weightValid) {
+                  toast.error("Weights must sum to 100%");
+                  return;
+                }
+                setStep(s => s + 1);
+              }}
+            >
+              Next
+            </Button>
           ) : (
             <Button key="submit" type="submit" loading={loading}>Create Job Posting</Button>
           )}

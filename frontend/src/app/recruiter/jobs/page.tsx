@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Briefcase, MapPin, Calendar, Pencil, Trash2 } from "lucide-react";
+import { Plus, Briefcase, MapPin, Calendar, Pencil, XCircle, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { jobsApi } from "@/lib/api";
 import { Job } from "@/lib/types";
@@ -19,6 +19,7 @@ export default function RecruiterJobsPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const [editJob, setEditJob] = useState<Job | null>(null);
+  const [closingId, setClosingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: jobs = [], isLoading } = useQuery<Job[]>({
@@ -26,16 +27,31 @@ export default function RecruiterJobsPage() {
     queryFn: async () => { const { data } = await jobsApi.myJobs(); return data; },
   });
 
-  const handleDelete = async (job: Job, e: React.MouseEvent) => {
+  const handleClose = async (job: Job, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Close "${job.title}"? This will hide it from candidates.`)) return;
-    setDeletingId(job.id);
+    if (!confirm(`Close "${job.title}"? Candidates will no longer be able to apply.`)) return;
+    setClosingId(job.id);
     try {
-      await jobsApi.delete(job.id);
+      await jobsApi.update(job.id, { status: "closed" });
       toast.success("Job closed");
       qc.invalidateQueries({ queryKey: ["recruiter-jobs"] });
     } catch {
       toast.error("Failed to close job");
+    } finally {
+      setClosingId(null);
+    }
+  };
+
+  const handleDelete = async (job: Job, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Permanently delete "${job.title}"? This will remove all applications and cannot be undone.`)) return;
+    setDeletingId(job.id);
+    try {
+      await jobsApi.delete(job.id);
+      toast.success("Job deleted");
+      qc.invalidateQueries({ queryKey: ["recruiter-jobs"] });
+    } catch {
+      toast.error("Failed to delete job");
     } finally {
       setDeletingId(null);
     }
@@ -113,18 +129,30 @@ export default function RecruiterJobsPage() {
                 <Link href={`/recruiter/jobs/${job.id}`}>
                   <Button variant="secondary" size="sm">View</Button>
                 </Link>
-                <button
-                  onClick={e => { e.stopPropagation(); setEditJob(job); }}
-                  className="p-1.5 rounded-lg border border-gray-200 hover:border-brand-200 hover:text-brand-600 text-gray-400 transition-colors"
-                  title="Edit job"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
+                {job.status !== "closed" && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setEditJob(job); }}
+                    className="p-1.5 rounded-lg border border-gray-200 hover:border-brand-200 hover:text-brand-600 text-gray-400 transition-colors"
+                    title="Edit job"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {job.status === "open" && (
+                  <button
+                    onClick={e => handleClose(job, e)}
+                    disabled={closingId === job.id}
+                    className="p-1.5 rounded-lg border border-gray-200 hover:border-amber-300 hover:text-amber-600 text-gray-400 transition-colors disabled:opacity-40"
+                    title="Close job"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={e => handleDelete(job, e)}
                   disabled={deletingId === job.id}
                   className="p-1.5 rounded-lg border border-gray-200 hover:border-red-300 hover:text-red-500 text-gray-400 transition-colors disabled:opacity-40"
-                  title="Close job"
+                  title="Delete job permanently"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

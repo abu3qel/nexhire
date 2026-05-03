@@ -1,6 +1,9 @@
+import os
+import shutil
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete as sql_delete
 from datetime import datetime
 
 from app.database import get_db
@@ -8,6 +11,7 @@ from app.models.job import Job
 from app.models.user import User
 from app.schemas.job import JobCreate, JobUpdate, JobOut, WeightsUpdate
 from app.routers.auth import get_current_user, require_recruiter
+from app.config import settings
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -50,11 +54,14 @@ async def list_jobs(
 
 
 @router.get("/{job_id}", response_model=JobOut)
-async def get_job(job_id: str, db: AsyncSession = Depends(get_db), _: User = Depends(get_current_user)):
+async def get_job(job_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = await db.execute(select(Job).where(Job.id == job_id))
     job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+    if job.status != "open":
+        if not (current_user.role == "recruiter" and str(job.recruiter_id) == str(current_user.id)):
+            raise HTTPException(status_code=404, detail="Job not found")
     return job
 
 
@@ -86,6 +93,9 @@ async def delete_job(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_recruiter),
 ):
+    from app.models.application import Application
+    from app.models.assessment import Assessment, CandidateChunk
+
     result = await db.execute(select(Job).where(Job.id == job_id))
     job = result.scalar_one_or_none()
     if not job:
@@ -93,7 +103,21 @@ async def delete_job(
     if str(job.recruiter_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not your job posting")
 
-    job.status = "closed"
+    app_ids_result = await db.execute(
+        select(Application.id).where(Application.job_id == job_id)
+    )
+    app_ids = app_ids_result.scalars().all()
+
+    if app_ids:
+        await db.execute(sql_delete(CandidateChunk).where(CandidateChunk.application_id.in_(app_ids)))
+        await db.execute(sql_delete(Assessment).where(Assessment.application_id.in_(app_ids)))
+        for app_id in app_ids:
+            app_dir = os.path.join(settings.UPLOAD_DIR, str(app_id))
+            if os.path.exists(app_dir):
+                shutil.rmtree(app_dir, ignore_errors=True)
+        await db.execute(sql_delete(Application).where(Application.job_id == job_id))
+
+    await db.delete(job)
     await db.commit()
 
 

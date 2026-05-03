@@ -1,9 +1,10 @@
 import os
 import uuid
+import shutil
 import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete as sql_delete
 from sqlalchemy.orm import selectinload
 from typing import Optional
 
@@ -146,6 +147,40 @@ async def update_application_status(
     await db.commit()
     await db.refresh(app)
     return app
+
+
+@router.delete("/{application_id}", status_code=204)
+async def delete_application(
+    application_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.models.assessment import Assessment, CandidateChunk
+
+    result = await db.execute(
+        select(Application)
+        .options(selectinload(Application.job))
+        .where(Application.id == application_id)
+    )
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    is_owner = str(app.candidate_id) == str(current_user.id)
+    is_job_recruiter = (
+        current_user.role == "recruiter" and str(app.job.recruiter_id) == str(current_user.id)
+    )
+    if not is_owner and not is_job_recruiter:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    app_dir = os.path.join(settings.UPLOAD_DIR, str(app.id))
+    if os.path.exists(app_dir):
+        shutil.rmtree(app_dir, ignore_errors=True)
+
+    await db.execute(sql_delete(CandidateChunk).where(CandidateChunk.application_id == app.id))
+    await db.execute(sql_delete(Assessment).where(Assessment.application_id == app.id))
+    await db.execute(sql_delete(Application).where(Application.id == app.id))
+    await db.commit()
 
 
 @router.get("/{application_id}")

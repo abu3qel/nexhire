@@ -2,8 +2,11 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { RankedCandidate, ApplicationStatus } from "@/lib/types";
+import { applicationsApi } from "@/lib/api";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { Badge } from "@/components/ui/Badge";
 import { StatusSelector } from "@/components/recruiter/StatusSelector";
@@ -56,6 +59,23 @@ const thCls = "text-left text-xs font-semibold text-gray-500 uppercase tracking-
 
 export function CandidateRankingTable({ candidates, jobId, mode = "composite" }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const handleDeleteApplication = async (applicationId: string, candidateName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Remove ${candidateName}'s application? This cannot be undone.`)) return;
+    setDeletingId(applicationId);
+    try {
+      await applicationsApi.delete(applicationId);
+      toast.success("Application removed");
+      qc.invalidateQueries({ queryKey: ["ranked", jobId] });
+    } catch {
+      toast.error("Failed to remove application");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const sorted = mode === "composite"
     ? [...candidates].sort((a, b) => (b.composite_score ?? -1) - (a.composite_score ?? -1))
@@ -135,6 +155,14 @@ export function CandidateRankingTable({ candidates, jobId, mode = "composite" }:
                       >
                         View
                       </Link>
+                      <button
+                        onClick={e => handleDeleteApplication(c.application_id, c.candidate_name, e)}
+                        disabled={deletingId === c.application_id}
+                        className="p-1 rounded border border-gray-200 hover:border-red-300 hover:text-red-500 text-gray-400 transition-colors disabled:opacity-40"
+                        title="Remove application"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                       {expanded
                         ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
                         : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
